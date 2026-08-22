@@ -135,11 +135,11 @@ body {
   flex: 1;
   display: flex;
   flex-wrap: wrap;
-  align-content: center;
+  align-content: flex-start; /* Impede que corte no topo quando rola */
   justify-content: center;
   gap: 15px;
   padding: 15px;
-  overflow: hidden; /* REMOVE a barra de rolagem */
+  overflow-y: auto; /* Restaura a rolagem para que seja possível ver todos os usuários e a tela no celular */
 }
 
 /* Cartões de Usuário (Avatares / Câmeras / Telas) */

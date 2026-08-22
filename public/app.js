@@ -280,6 +280,13 @@ function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially = false)
       muteBtn.innerText = 'Mutar';
       muteBtn.classList.add('mute-btn-small');
       
+      const fsBtn = document.createElement('button');
+      fsBtn.innerText = '⛶';
+      fsBtn.title = 'Tela Cheia';
+      fsBtn.style.padding = '4px 6px';
+      fsBtn.classList.add('mute-btn-small');
+      fsBtn.style.backgroundColor = '#4f545c';
+      
       volSlider.addEventListener('input', (e) => {
         videoEl.volume = e.target.value;
         if(videoEl.volume == 0) {
@@ -307,8 +314,17 @@ function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially = false)
         }
       });
       
+      fsBtn.addEventListener('click', () => {
+        if (videoEl.requestFullscreen) {
+          videoEl.requestFullscreen();
+        } else if (videoEl.webkitRequestFullscreen) {
+          videoEl.webkitRequestFullscreen();
+        }
+      });
+      
       overlay.appendChild(volSlider);
       overlay.appendChild(muteBtn);
+      overlay.appendChild(fsBtn);
       containerEl.appendChild(overlay);
     }
     
