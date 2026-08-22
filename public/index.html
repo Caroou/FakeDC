@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>FakeDC</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Login Section -->
+  <div id="login-section">
+    <div class="login-card">
+      <h1>FakeDC</h1>
+      
+      <input type="text" id="username-input" placeholder="Seu Nickname" autocomplete="off">
+      
+      <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 15px; color: #dcddde; font-size: 14px;">
+        <input type="checkbox" id="global-muted-checkbox" style="width: 16px; height: 16px; margin: 0; margin-right: 8px; cursor: pointer; border: none;">
+        <label for="global-muted-checkbox" style="cursor: pointer; user-select: none;">Entrar com microfone mutado</label>
+      </div>
+      
+      <div class="tabs">
+        <button id="tab-create" class="active">Criar Sala</button>
+        <button id="tab-join">Entrar em Sala</button>
+      </div>
+
+      <div id="create-section">
+        <input type="text" id="create-room-input" placeholder="Nome da nova sala" autocomplete="off">
+        <button id="create-btn">Criar e Entrar</button>
+      </div>
+
+      <div id="join-section" style="display: none;">
+        <input type="text" id="join-room-input" placeholder="Nome da sala existente" autocomplete="off">
+        <button id="join-btn">Entrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App Section -->
+  <div id="app-section">
+    <!-- Video and Controls -->
+    <div class="main-content">
+      <div class="room-header">
+        <span id="room-name-display">Sala: </span>
+      </div>
+      <div id="video-grid"></div>
+      
+      <div class="controls">
+        <button id="mic-toggle-btn">Mutar</button>
+        
+        <div class="share-group">
+          <select id="quality-selector">
+            <option value="1080">1080p60</option>
+            <option value="720">720p30</option>
+          </select>
+          <button id="screen-share-btn">Compartilhar Tela</button>
+        </div>
+
+        <button id="leave-room-btn" class="danger" style="background-color: #ed4245;">Sair</button>
+      </div>
+    </div>
+    
+    <!-- Text Chat -->
+    <div class="chat-container">
+      <div class="chat-header">Chat de Texto</div>
+      <div id="chat-messages"></div>
+      <form id="chat-form">
+        <input type="text" id="chat-input" placeholder="Enviar mensagem..." autocomplete="off">
+        <button type="submit">Enviar</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

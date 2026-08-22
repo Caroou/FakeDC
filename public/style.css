@@ -1,0 +1,452 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #36393f;
+  color: #dcddde;
+  display: flex;
+  height: 100vh; /* Fallback */
+  height: 100dvh; /* Garante que teclados e barras de navegação não cortem o site no mobile */
+  overflow: hidden;
+}
+
+/* Login Section */
+#login-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background-color: #2f3136;
+}
+
+.login-card {
+  background-color: #36393f;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  text-align: center;
+  width: 350px;
+  max-width: 90%;
+}
+
+.login-card h1 {
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+.login-card input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #202225;
+  border-radius: 4px;
+  background-color: #202225;
+  color: #dcddde;
+  outline: none;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.tabs button {
+  flex: 1;
+  padding: 10px;
+  background-color: #2f3136;
+  color: #8e9297;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.tabs button.active {
+  background-color: #5865f2;
+  color: #fff;
+}
+
+.tabs button:hover:not(.active) {
+  background-color: #40444b;
+}
+
+#create-section, #join-section {
+  display: flex;
+  flex-direction: column;
+}
+
+#create-section button, #join-section button {
+  width: 100%;
+  padding: 10px;
+  background-color: #3ba55c;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  transition: background-color 0.2s;
+}
+
+#create-section button:hover, #join-section button:hover {
+  background-color: #2d7d46;
+}
+
+/* App Section */
+#app-section {
+  display: none;
+  width: 100%;
+  height: 100%;
+  flex-direction: row;
+}
+
+/* Header da Sala */
+.room-header {
+  padding: 10px 20px;
+  background-color: #202225;
+  font-weight: bold;
+  font-size: 16px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #2f3136;
+  flex-shrink: 0;
+}
+
+/* Main content (Video + Controls) */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #36393f;
+  min-height: 0;
+}
+
+/* Video Grid (Área Principal) */
+#video-grid {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 15px;
+  overflow: hidden; /* REMOVE a barra de rolagem */
+}
+
+/* Cartões de Usuário (Avatares / Câmeras / Telas) */
+.media-container {
+  flex: 1 1 250px;
+  max-width: 400px;
+  height: auto;
+  aspect-ratio: 16/9;
+  background-color: #202225;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer; /* Indica que é clicável para focar */
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.media-container:hover {
+  border-color: #5865f2;
+}
+
+.media-container video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background-color: #000;
+}
+
+.user-label {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #5865f2;
+  color: #fff;
+  font-size: 32px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Focus Mode (Quando alguém clica para expandir uma tela) */
+#video-grid.focus-mode {
+  padding: 0;
+  gap: 0;
+  align-content: stretch;
+  align-items: stretch;
+}
+
+#video-grid.focus-mode .media-container.focused {
+  flex: 1 1 100%;
+  max-width: 100%;
+  height: 100%; /* Ocupa 100% do espaço */
+  border-radius: 0;
+  border: none;
+  background-color: #36393f; /* Fundo igual ao do site para sumir a 'borda preta' */
+}
+
+#video-grid.focus-mode .media-container.focused video {
+  background-color: transparent;
+  object-fit: contain; /* Mantém a proporção sem cortar, as barras laterais ficarão invisíveis */
+}
+
+#video-grid.focus-mode .media-container:not(.focused) {
+  display: none !important; /* Some completamente com as miniaturas */
+}
+
+/* Volume e Mute por Usuário / Transmissão */
+.overlay-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.7);
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+.media-container:hover .overlay-controls {
+  opacity: 1;
+}
+
+.volume-slider {
+  width: 70px;
+  cursor: pointer;
+}
+
+.mute-btn-small {
+  background: #ed4245;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.mute-btn-small.muted {
+  background: #4f545c;
+}
+
+/* Indicador de pessoa mutada */
+.mute-indicator {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(237, 66, 69, 0.9);
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 14px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Controls */
+.controls {
+  height: 80px;
+  background-color: #2f3136;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.controls button {
+  padding: 12px 24px;
+  border-radius: 20px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: #4f545c;
+  color: #fff;
+}
+
+.controls button:hover {
+  background-color: #5d6269;
+}
+
+.controls button.danger {
+  background-color: #ed4245;
+}
+
+.controls button.danger:hover {
+  background-color: #c93b3e;
+}
+
+.controls button.active {
+  background-color: #3ba55c;
+}
+
+.controls button.active:hover {
+  background-color: #2d7d46;
+}
+
+/* Chat Sidebar */
+.chat-container {
+  width: 300px;
+  background-color: #2f3136;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #202225;
+  flex-shrink: 0;
+}
+
+.chat-header {
+  padding: 20px;
+  border-bottom: 1px solid #202225;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+#chat-messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.message {
+  background-color: #36393f;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  word-wrap: break-word;
+}
+
+.message strong {
+  color: #fff;
+}
+
+#chat-form {
+  padding: 15px;
+  padding-bottom: max(15px, env(safe-area-inset-bottom, 15px)); /* Fix para botões nativos do celular não tamparem a barra */
+  background-color: #202225;
+  display: flex;
+  flex-shrink: 0;
+}
+
+#chat-form input {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  background-color: #40444b;
+  color: #dcddde;
+  outline: none;
+}
+
+#chat-form button {
+  padding: 10px 15px;
+  background-color: #5865f2;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  margin-left: 10px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#chat-form button:hover {
+  background-color: #4752c4;
+}
+
+/* Responsividade Mobile */
+@media (max-width: 768px) {
+  #app-section {
+    flex-direction: column;
+  }
+  .main-content {
+    flex: 1.5; 
+  }
+  .chat-container {
+    width: 100%;
+    flex: 1; 
+    border-left: none;
+    border-top: 2px solid #202225;
+  }
+  .controls {
+    height: 60px;
+    gap: 10px;
+  }
+  .controls button {
+    padding: 10px 15px;
+    font-size: 14px;
+  }
+  .chat-header {
+    padding: 10px;
+  }
+}
+/* Share Group (Select + Button combined) */
+.share-group {
+  display: flex;
+  align-items: stretch;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: #5865F2; /* Cor padrão do botão */
+}
+.share-group select {
+  background: rgba(0, 0, 0, 0.2);
+  color: white;
+  border: none;
+  padding: 0 10px;
+  font-weight: bold;
+  cursor: pointer;
+  outline: none;
+  border-right: 1px solid rgba(0,0,0,0.3);
+}
+.share-group button {
+  border-radius: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+.share-group:hover {
+  background-color: #4752C4;
+}
