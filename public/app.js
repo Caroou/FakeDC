@@ -363,7 +363,10 @@ chatForm.addEventListener('submit', e => {
 function addMessage(user, msg) {
   const div = document.createElement('div');
   div.classList.add('message');
-  div.innerHTML = `<strong>${user}:</strong> ${msg}`;
+  
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  
+  div.innerHTML = `<span class="msg-time">${time}</span> <strong>${user}:</strong> ${msg}`;
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }

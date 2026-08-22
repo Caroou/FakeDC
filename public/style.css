@@ -450,3 +450,10 @@ body {
 .share-group:hover {
   background-color: #4752C4;
 }
+/* Chat Timestamp */
+.msg-time {
+  font-size: 11px;
+  color: #72767d; /* Cor cinza sutil idêntica ao Discord */
+  margin-right: 6px;
+  user-select: none;
+}
