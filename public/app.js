@@ -119,10 +119,11 @@ socket.on('user-connected', (userId, newUsername) => {
 
 socket.on('user-disconnected', userId => {
   if (peers[userId]) {
+    const leavingName = peers[userId].username || 'Um usuário';
     peers[userId].pc.close();
     delete peers[userId];
     removeVideo(userId);
-    addMessage('Sistema', `Um usuário saiu da sala.`);
+    addMessage('Sistema', `${leavingName} saiu da sala.`);
   }
 });
 
