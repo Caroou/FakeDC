@@ -7,8 +7,7 @@ const tabCreate = document.getElementById('tab-create');
 const tabJoin = document.getElementById('tab-join');
 const createSection = document.getElementById('create-section');
 const joinSection = document.getElementById('join-section');
-const createBtn = document.getElementById('create-btn');
-const joinBtn = document.getElementById('join-btn');
+const actionBtn = document.getElementById('action-btn'); // Unified button
 const createRoomInput = document.getElementById('create-room-input');
 const joinRoomInput = document.getElementById('join-room-input');
 const usernameInput = document.getElementById('username-input');
@@ -29,6 +28,7 @@ let screenStream;
 let roomId;
 let username;
 let isMicMuted = false;
+let currentTab = 'join'; // join or create
 const peers = {}; 
 
 const ICE_SERVERS = {
@@ -40,29 +40,33 @@ const ICE_SERVERS = {
 
 // --- Tabs Logic ---
 tabCreate.addEventListener('click', () => {
-  tabCreate.classList.add('active');
-  tabJoin.classList.remove('active');
-  createSection.style.display = 'flex';
-  joinSection.style.display = 'none';
+  currentTab = 'create';
+  tabCreate.className = 'flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 bg-zinc-600 text-white shadow';
+  tabJoin.className = 'flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 text-zinc-400 hover:text-zinc-200';
+  createSection.classList.remove('hidden-section');
+  joinSection.classList.add('hidden-section');
+  actionBtn.innerText = 'Criar Sala';
 });
 
 tabJoin.addEventListener('click', () => {
-  tabJoin.classList.add('active');
-  tabCreate.classList.remove('active');
-  joinSection.style.display = 'flex';
-  createSection.style.display = 'none';
+  currentTab = 'join';
+  tabJoin.className = 'flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 bg-zinc-600 text-white shadow';
+  tabCreate.className = 'flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 text-zinc-400 hover:text-zinc-200';
+  joinSection.classList.remove('hidden-section');
+  createSection.classList.add('hidden-section');
+  actionBtn.innerText = 'Conectar à Sala';
 });
 
-async function enterRoom(roomIdToEnter, isCreating) {
+async function enterRoom() {
   username = usernameInput.value.trim();
-  roomId = roomIdToEnter.trim();
+  roomId = currentTab === 'create' ? createRoomInput.value.trim() : joinRoomInput.value.trim();
   
   if (!roomId || !username) {
     alert('Por favor, preencha o nome e a sala.');
     return;
   }
 
-  if (isCreating) {
+  if (currentTab === 'create') {
     socket.emit('create-room', roomId, (response) => {
       if (response.success) proceedToRoom();
       else alert(response.message);
@@ -75,16 +79,15 @@ async function enterRoom(roomIdToEnter, isCreating) {
   }
 }
 
-createBtn.addEventListener('click', () => enterRoom(createRoomInput.value, true));
-joinBtn.addEventListener('click', () => enterRoom(joinRoomInput.value, false));
+actionBtn.addEventListener('click', enterRoom);
 
 async function proceedToRoom() {
   try {
     await initMedia();
-    loginSection.style.display = 'none';
-    appSection.style.display = 'flex';
+    loginSection.classList.add('hidden-section');
+    appSection.classList.remove('hidden-section');
     
-    roomNameDisplay.innerText = `Sala: ${roomId}`;
+    roomNameDisplay.innerText = `# ${roomId}`;
     
     addRemoteMedia('local-mic', localStream, `${username} (Você)`, isMicMuted);
     
@@ -105,9 +108,20 @@ async function initMedia() {
     if (audioTrack) {
       audioTrack.enabled = false;
       isMicMuted = true;
-      micToggleBtn.textContent = 'Desmutar';
-      micToggleBtn.classList.add('danger');
+      updateMicButtonUI();
     }
+  }
+}
+
+function updateMicButtonUI() {
+  if (isMicMuted) {
+    micToggleBtn.classList.remove('bg-discord-secondary', 'hover:bg-zinc-700', 'text-white');
+    micToggleBtn.classList.add('bg-discord-red', 'hover:bg-red-600', 'text-white');
+    micToggleBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line></svg>';
+  } else {
+    micToggleBtn.classList.add('bg-discord-secondary', 'hover:bg-zinc-700', 'text-white');
+    micToggleBtn.classList.remove('bg-discord-red', 'hover:bg-red-600', 'text-white');
+    micToggleBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>';
   }
 }
 
@@ -138,12 +152,44 @@ socket.on('user-muted', (userId, isMuted) => {
   });
 });
 
+// Detect who is speaking
+let speakingInterval;
+if (window.AudioContext || window.webkitAudioContext) {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  
+  speakingInterval = setInterval(() => {
+    for (const userId in peers) {
+      if (peers[userId].analyser) {
+        const dataArray = new Uint8Array(peers[userId].analyser.frequencyBinCount);
+        peers[userId].analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          sum += dataArray[i];
+        }
+        const average = sum / dataArray.length;
+        
+        const mediaElements = document.querySelectorAll(`[id^="media-${userId}-"]`);
+        mediaElements.forEach(el => {
+          if (average > 10) {
+            el.classList.add('ring-discord-green');
+            el.classList.remove('ring-transparent');
+          } else {
+            el.classList.remove('ring-discord-green');
+            el.classList.add('ring-transparent');
+          }
+        });
+      }
+    }
+  }, 100);
+}
+
+
 // --- WebRTC Logic ---
 function createPeerConnection(userId, peerUsername) {
   const pc = new RTCPeerConnection(ICE_SERVERS);
   const isPolite = socket.id > userId;
   
-  const peerObj = { pc, isPolite, makingOffer: false, ignoreOffer: false, username: peerUsername, isMuted: false };
+  const peerObj = { pc, isPolite, makingOffer: false, ignoreOffer: false, username: peerUsername, isMuted: false, analyser: null };
   peers[userId] = peerObj;
 
   pc.onnegotiationneeded = async () => {
@@ -166,9 +212,24 @@ function createPeerConnection(userId, peerUsername) {
     let stream = streams[0];
     if (stream) {
       const mediaId = `${userId}-${stream.id}`;
-      // Usar estado isMuted guardado no peerObj que veio no signal
       addRemoteMedia(mediaId, stream, peerObj.username, peerObj.isMuted);
       
+      // Audio level analyser for "speaking" ring
+      if (track.kind === 'audio' && window.AudioContext) {
+        try {
+          // Check if audiocontext is running
+          if (audioContext.state === 'suspended') audioContext.resume();
+          
+          const audioSrc = audioContext.createMediaStreamSource(stream);
+          const analyser = audioContext.createAnalyser();
+          analyser.fftSize = 256;
+          audioSrc.connect(analyser);
+          peerObj.analyser = analyser;
+        } catch (e) {
+          console.warn("Could not create audio analyser", e);
+        }
+      }
+
       const updateVisibility = () => updateMediaVisibility(mediaId, stream);
       stream.addEventListener('addtrack', updateVisibility);
       stream.addEventListener('removetrack', updateVisibility);
@@ -187,7 +248,6 @@ socket.on('signal', async ({ from, signal, username: signalUsername, isMuted: si
 
   const { pc, isPolite } = peerObj;
   
-  // Atualiza estado mudo baseado no sinal
   peerObj.isMuted = signalIsMuted;
 
   try {
@@ -224,17 +284,41 @@ function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially = false)
   if (!containerEl) {
     containerEl = document.createElement('div');
     containerEl.id = `media-${mediaId}`;
-    containerEl.classList.add('media-container');
+    containerEl.className = 'media-container group relative bg-discord-secondary rounded-2xl overflow-hidden flex items-center justify-center cursor-pointer transition-all duration-300 ring-2 ring-transparent shadow-xl shrink-0 border border-white/5';
+    containerEl.style.flex = '1 1 280px';
+    containerEl.style.maxWidth = '400px';
+    containerEl.style.aspectRatio = '16/9';
     
     containerEl.addEventListener('click', () => {
       const isFocused = containerEl.classList.contains('focused');
-      document.querySelectorAll('.media-container.focused').forEach(el => el.classList.remove('focused'));
+      document.querySelectorAll('.media-container.focused').forEach(el => {
+        el.classList.remove('focused');
+        el.style.flex = '1 1 280px';
+        el.style.maxWidth = '400px';
+        el.style.height = 'auto';
+        el.classList.add('rounded-2xl');
+      });
       
       if (!isFocused) {
         containerEl.classList.add('focused');
-        videoGrid.classList.add('focus-mode');
+        containerEl.style.flex = '1 1 100%';
+        containerEl.style.maxWidth = '100%';
+        containerEl.style.height = '100%';
+        containerEl.classList.remove('rounded-2xl');
+        videoGrid.classList.add('p-0', 'gap-0');
+        videoGrid.classList.remove('p-4', 'gap-4', 'content-start');
+        videoGrid.classList.add('content-stretch', 'items-stretch');
+        
+        // Esconder os outros
+        Array.from(videoGrid.children).forEach(child => {
+          if (child !== containerEl) child.style.display = 'none';
+        });
       } else {
-        videoGrid.classList.remove('focus-mode');
+        videoGrid.classList.remove('p-0', 'gap-0', 'content-stretch', 'items-stretch');
+        videoGrid.classList.add('p-4', 'gap-4', 'content-start');
+        Array.from(videoGrid.children).forEach(child => {
+          child.style.display = 'flex';
+        });
       }
     });
     
@@ -242,6 +326,7 @@ function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially = false)
     videoEl.id = `video-${mediaId}`;
     videoEl.autoplay = true;
     videoEl.playsInline = true;
+    videoEl.className = 'w-full h-full object-contain bg-black';
     
     if (mediaId.startsWith('local-')) {
       videoEl.muted = true;
@@ -250,64 +335,62 @@ function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially = false)
     videoEl.style.display = hasVideo ? 'block' : 'none';
     
     const labelEl = document.createElement('div');
-    labelEl.classList.add('user-label');
+    labelEl.className = 'absolute bottom-3 left-3 bg-black/60 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-xs font-bold pointer-events-none z-10 shadow-sm border border-white/5';
     labelEl.innerText = hasVideo ? `${peerUsername} (Tela)` : peerUsername;
     
     const avatarEl = document.createElement('div');
-    avatarEl.classList.add('avatar');
+    avatarEl.className = 'absolute inset-0 m-auto w-24 h-24 rounded-full bg-gradient-to-br from-discord-blurple to-discord-blurpleHover text-white text-3xl font-bold flex items-center justify-center z-0 shadow-2xl pointer-events-none border-4 border-discord-main/50';
     avatarEl.innerText = peerUsername.charAt(0).toUpperCase();
     avatarEl.style.display = hasVideo ? 'none' : 'flex';
     
     // Indicador de mudo apenas para canais de voz
     const muteInd = document.createElement('div');
-    muteInd.classList.add('mute-indicator');
     muteInd.id = `mute-indicator-${mediaId}`;
-    muteInd.innerText = '🔇';
+    muteInd.className = 'absolute bottom-3 right-3 bg-discord-red text-white w-8 h-8 rounded-full flex items-center justify-center z-10 shadow-lg border-2 border-discord-secondary';
+    muteInd.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line></svg>';
     muteInd.style.display = (!hasVideo && isMutedInitially) ? 'flex' : 'none';
     
     // Controles de Volume (Apenas para conexões remotas)
     if (!mediaId.startsWith('local-')) {
       const overlay = document.createElement('div');
-      overlay.classList.add('overlay-controls');
+      overlay.className = 'absolute top-3 right-3 bg-black/80 backdrop-blur-md px-3 py-2 rounded-xl flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-200 z-20 shadow-xl border border-white/10 translate-y-[-5px] group-hover:translate-y-0';
       overlay.addEventListener('click', e => e.stopPropagation()); 
       
       const volSlider = document.createElement('input');
       volSlider.type = 'range';
       volSlider.min = 0; volSlider.max = 1; volSlider.step = 0.01; volSlider.value = 1;
-      volSlider.classList.add('volume-slider');
       volSlider.title = 'Volume';
+      volSlider.className = 'w-16 accent-discord-blurple cursor-pointer';
       
       const muteBtn = document.createElement('button');
-      muteBtn.innerText = 'Mutar';
-      muteBtn.classList.add('mute-btn-small');
+      muteBtn.className = 'text-white p-1.5 rounded-lg bg-discord-red hover:bg-red-600 transition-colors shadow-sm';
+      muteBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>';
       
       const fsBtn = document.createElement('button');
-      fsBtn.innerText = '⛶';
       fsBtn.title = 'Tela Cheia';
-      fsBtn.style.padding = '4px 6px';
-      fsBtn.classList.add('mute-btn-small');
-      fsBtn.style.backgroundColor = '#4f545c';
+      fsBtn.className = 'text-white p-1.5 rounded-lg bg-zinc-600 hover:bg-zinc-500 transition-colors shadow-sm';
+      fsBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>';
       
       volSlider.addEventListener('input', (e) => {
         videoEl.volume = e.target.value;
         if(videoEl.volume == 0) {
-          muteBtn.innerText = 'Desmutar';
-          muteBtn.classList.add('muted');
+          muteBtn.classList.remove('bg-zinc-600', 'hover:bg-zinc-500');
+          muteBtn.classList.add('bg-discord-red', 'hover:bg-red-600');
         } else if (videoEl.muted) {
           videoEl.muted = false;
-          muteBtn.innerText = 'Mutar';
-          muteBtn.classList.remove('muted');
+          muteBtn.classList.add('bg-zinc-600', 'hover:bg-zinc-500');
+          muteBtn.classList.remove('bg-discord-red', 'hover:bg-red-600');
         }
       });
       
       muteBtn.addEventListener('click', () => {
         videoEl.muted = !videoEl.muted;
         if (videoEl.muted) {
-          muteBtn.innerText = 'Desmutar';
-          muteBtn.classList.add('muted');
+          muteBtn.classList.remove('bg-zinc-600', 'hover:bg-zinc-500');
+          muteBtn.classList.add('bg-discord-red', 'hover:bg-red-600');
         } else {
-          muteBtn.innerText = 'Mutar';
-          muteBtn.classList.remove('muted');
+          muteBtn.classList.add('bg-zinc-600', 'hover:bg-zinc-500');
+          muteBtn.classList.remove('bg-discord-red', 'hover:bg-red-600');
           if (volSlider.value == 0) {
             volSlider.value = 0.5;
             videoEl.volume = 0.5;
@@ -349,7 +432,12 @@ function updateMediaVisibility(mediaId, stream) {
     const hasAnyTrack = stream.getTracks().length > 0;
     if (!hasAnyTrack) {
       if (containerEl.classList.contains('focused')) {
-        videoGrid.classList.remove('focus-mode');
+        // Reset grid
+        videoGrid.classList.remove('p-0', 'gap-0', 'content-stretch', 'items-stretch');
+        videoGrid.classList.add('p-4', 'gap-4', 'content-start');
+        Array.from(videoGrid.children).forEach(child => {
+          child.style.display = 'flex';
+        });
       }
       containerEl.remove();
     }
@@ -360,7 +448,11 @@ function removeVideo(userId) {
   const elements = document.querySelectorAll(`[id^="media-${userId}-"]`);
   elements.forEach(el => {
     if (el.classList.contains('focused')) {
-      videoGrid.classList.remove('focus-mode');
+      videoGrid.classList.remove('p-0', 'gap-0', 'content-stretch', 'items-stretch');
+      videoGrid.classList.add('p-4', 'gap-4', 'content-start');
+      Array.from(videoGrid.children).forEach(child => {
+        child.style.display = 'flex';
+      });
     }
     el.remove();
   });
@@ -379,11 +471,11 @@ chatForm.addEventListener('submit', e => {
 
 function addMessage(user, msg) {
   const div = document.createElement('div');
-  div.classList.add('message');
+  div.className = 'bg-discord-tertiary p-3 rounded-xl text-sm break-words border border-white/5 shadow-sm';
   
   const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   
-  div.innerHTML = `<span class="msg-time">${time}</span> <strong>${user}:</strong> ${msg}`;
+  div.innerHTML = `<div class="flex items-baseline gap-2 mb-1"><strong class="text-white font-semibold">${user}</strong><span class="text-[10.5px] text-zinc-500 font-medium">${time}</span></div><p class="text-zinc-300 leading-relaxed">${msg}</p>`;
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -401,8 +493,7 @@ micToggleBtn.addEventListener('click', () => {
     if (audioTrack) {
       isMicMuted = !isMicMuted;
       audioTrack.enabled = !isMicMuted;
-      micToggleBtn.textContent = isMicMuted ? 'Desmutar' : 'Mutar';
-      micToggleBtn.classList.toggle('danger', isMicMuted);
+      updateMicButtonUI();
       
       socket.emit('mute-status', isMicMuted);
       
@@ -424,14 +515,16 @@ screenShareBtn.addEventListener('click', async () => {
         video: videoConstraints, 
         audio: true 
       });
-      screenShareBtn.textContent = 'Parar Tela';
-      screenShareBtn.classList.add('active');
+      
+      // Update UI for sharing
+      screenShareBtn.classList.remove('text-zinc-300', 'hover:bg-zinc-600');
+      screenShareBtn.classList.add('text-white', 'bg-discord-green', 'hover:bg-green-600');
       
       const screenVideoTrack = screenStream.getVideoTracks()[0];
       const screenAudioTrack = screenStream.getAudioTracks()[0];
       
       if (screenVideoTrack && 'contentHint' in screenVideoTrack) {
-        screenVideoTrack.contentHint = 'detail'; // Força qualidade/resolução perfeita instantaneamente em detrimento de FPS no primeiro segundo
+        screenVideoTrack.contentHint = 'detail'; 
       }
       
       for (const userId in peers) {
@@ -456,15 +549,6 @@ screenShareBtn.addEventListener('click', async () => {
             }
           } catch (e) {
             console.warn('Falha ao tentar forçar codec H.264', e);
-          }
-          
-          try {
-            const params = sender.getParameters();
-            if (!params.encodings) params.encodings = [{}];
-            params.degradationPreference = 'balanced'; 
-            sender.setParameters(params);
-          } catch (e) {
-            console.warn('Navegador não suporta setParameters para otimização', e);
           }
         }
         
@@ -505,12 +589,18 @@ function stopScreenSharing() {
     }
     
     screenStream = null;
-    screenShareBtn.textContent = 'Compartilhar Tela';
-    screenShareBtn.classList.remove('active');
+    screenShareBtn.classList.add('text-zinc-300', 'hover:bg-zinc-600');
+    screenShareBtn.classList.remove('text-white', 'bg-discord-green', 'hover:bg-green-600');
     
     const localScreen = document.getElementById('media-local-screen');
     if (localScreen) {
-      if (localScreen.classList.contains('focused')) videoGrid.classList.remove('focus-mode');
+      if (localScreen.classList.contains('focused')) {
+        videoGrid.classList.remove('p-0', 'gap-0', 'content-stretch', 'items-stretch');
+        videoGrid.classList.add('p-4', 'gap-4', 'content-start');
+        Array.from(videoGrid.children).forEach(child => {
+          child.style.display = 'flex';
+        });
+      }
       localScreen.remove();
     }
   }

@@ -1,75 +1,203 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>FakeDC</title>
-  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            discord: {
+              main: '#1e1f22',
+              secondary: '#2b2d31',
+              tertiary: '#313338',
+              blurple: '#5865f2',
+              blurpleHover: '#4752c4',
+              red: '#da373c',
+              green: '#23a55a'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'Segoe UI', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #1a1b1e; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #232428; }
+    
+    /* Animations */
+    @keyframes glow {
+      0% { box-shadow: 0 0 20px -5px rgba(88, 101, 242, 0.4); }
+      50% { box-shadow: 0 0 30px 5px rgba(88, 101, 242, 0.6); }
+      100% { box-shadow: 0 0 20px -5px rgba(88, 101, 242, 0.4); }
+    }
+    .glow-effect { animation: glow 4s infinite; }
+    
+    /* Hide unactive sections smoothly */
+    .hidden-section { display: none !important; }
+  </style>
 </head>
-<body>
+<body class="bg-discord-main text-zinc-300 font-sans h-screen w-screen overflow-hidden flex flex-col selection:bg-discord-blurple selection:text-white">
 
-  <!-- Login Section -->
-  <div id="login-section">
-    <div class="login-card">
-      <h1>FakeDC</h1>
+  <!-- ================= LOBBY ================= -->
+  <div id="login-section" class="flex-1 flex items-center justify-center relative min-h-screen">
+    <!-- Subtle Background Glow -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
+      <div class="w-[500px] h-[500px] bg-discord-blurple/20 rounded-full blur-[100px]"></div>
+    </div>
+    
+    <div class="bg-discord-secondary p-8 rounded-2xl shadow-2xl z-10 w-full max-w-md border border-zinc-700/50 glow-effect">
       
-      <input type="text" id="username-input" placeholder="Seu Nickname" autocomplete="off">
-      
-      <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 15px; color: #dcddde; font-size: 14px;">
-        <input type="checkbox" id="global-muted-checkbox" style="width: 16px; height: 16px; margin: 0; margin-right: 8px; cursor: pointer; border: none;">
-        <label for="global-muted-checkbox" style="cursor: pointer; user-select: none;">Entrar com microfone mutado</label>
-      </div>
-      
-      <div class="tabs">
-        <button id="tab-create" class="active">Criar Sala</button>
-        <button id="tab-join">Entrar em Sala</button>
-      </div>
-
-      <div id="create-section">
-        <input type="text" id="create-room-input" placeholder="Nome da nova sala" autocomplete="off">
-        <button id="create-btn">Criar e Entrar</button>
+      <!-- Logo -->
+      <div class="flex flex-col items-center mb-8">
+        <div class="flex items-center gap-3">
+          <svg class="w-8 h-8 text-discord-blurple" fill="currentColor" viewBox="0 0 24 24"><path d="M14.82 4.26a10.14 10.14 0 0 0-5.64 0 10.08 10.08 0 0 0-6.16 6.16 10.14 10.14 0 0 0 0 5.64 10.08 10.08 0 0 0 6.16 6.16 10.14 10.14 0 0 0 5.64 0 10.08 10.08 0 0 0 6.16-6.16 10.14 10.14 0 0 0 0-5.64 10.08 10.08 0 0 0-6.16-6.16zm-5.46 14a2.22 2.22 0 1 1 0-4.44 2.22 2.22 0 0 1 0 4.44zm5.28 0a2.22 2.22 0 1 1 0-4.44 2.22 2.22 0 0 1 0 4.44z"/></svg>
+          <h1 class="text-3xl font-bold text-white tracking-tight">FakeDC</h1>
+        </div>
+        <p class="text-zinc-400 text-sm mt-2">Conecte-se com seus amigos</p>
       </div>
 
-      <div id="join-section" style="display: none;">
-        <input type="text" id="join-room-input" placeholder="Nome da sala existente" autocomplete="off">
-        <button id="join-btn">Entrar</button>
+      <!-- Segmented Control -->
+      <div class="bg-discord-tertiary p-1 flex rounded-lg mb-6">
+        <button id="tab-join" class="flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 bg-zinc-600 text-white shadow">Entrar em Sala</button>
+        <button id="tab-create" class="flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 text-zinc-400 hover:text-zinc-200">Criar Sala</button>
       </div>
+
+      <!-- Inputs -->
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-zinc-400 uppercase tracking-wide mb-1.5">Nome de Usuário</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg class="h-5 w-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            </div>
+            <input type="text" id="username-input" placeholder="Seu Nickname" autocomplete="off" class="w-full bg-discord-main text-white pl-10 pr-4 py-3 rounded-xl border border-zinc-700/50 focus:border-discord-blurple focus:ring-1 focus:ring-discord-blurple outline-none transition-all duration-200">
+          </div>
+        </div>
+
+        <div id="join-section" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-zinc-400 uppercase tracking-wide mb-1.5">ID da Sala</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
+              </div>
+              <input type="text" id="join-room-input" placeholder="Nome ou ID da sala" autocomplete="off" class="w-full bg-discord-main text-white pl-10 pr-4 py-3 rounded-xl border border-zinc-700/50 focus:border-discord-blurple focus:ring-1 focus:ring-discord-blurple outline-none transition-all duration-200">
+            </div>
+          </div>
+        </div>
+        
+        <div id="create-section" class="hidden-section space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-zinc-400 uppercase tracking-wide mb-1.5">Criar Nova Sala</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              </div>
+              <input type="text" id="create-room-input" placeholder="Defina um ID para a sala" autocomplete="off" class="w-full bg-discord-main text-white pl-10 pr-4 py-3 rounded-xl border border-zinc-700/50 focus:border-discord-blurple focus:ring-1 focus:ring-discord-blurple outline-none transition-all duration-200">
+            </div>
+          </div>
+        </div>
+
+        <!-- Mute Toggle -->
+        <label class="flex items-center gap-3 cursor-pointer group mt-2 bg-discord-tertiary/50 p-3 rounded-xl border border-transparent hover:border-zinc-700/50 transition-colors">
+          <input type="checkbox" id="global-muted-checkbox" class="peer sr-only">
+          <div class="w-10 h-6 bg-zinc-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-discord-red relative"></div>
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+            <span class="text-sm font-medium text-zinc-300">Entrar mutado</span>
+          </div>
+        </label>
+      </div>
+
+      <button id="action-btn" class="w-full mt-6 bg-discord-blurple hover:bg-discord-blurpleHover text-white font-semibold py-3 rounded-xl transition-all duration-200 active:scale-[0.98] shadow-lg shadow-discord-blurple/20">
+        Conectar à Sala
+      </button>
     </div>
   </div>
 
-  <!-- Main App Section -->
-  <div id="app-section">
-    <!-- Video and Controls -->
-    <div class="main-content">
-      <div class="room-header">
-        <span id="room-name-display">Sala: </span>
-      </div>
-      <div id="video-grid"></div>
+  <!-- ================= APP SECTION ================= -->
+  <div id="app-section" class="hidden-section w-full h-full flex flex-col md:flex-row">
+    
+    <!-- Main Area (Video Grid + Top Header + Bottom Dock) -->
+    <div class="flex-1 flex flex-col min-w-0 relative">
       
-      <div class="controls">
-        <button id="mic-toggle-btn">Mutar</button>
-        
-        <div class="share-group">
-          <select id="quality-selector">
-            <option value="1080">1080p60</option>
-            <option value="720">720p30</option>
-          </select>
-          <button id="screen-share-btn">Compartilhar Tela</button>
+      <!-- Top Header -->
+      <header class="bg-discord-secondary/80 backdrop-blur-md h-14 flex items-center justify-between px-6 border-b border-white/5 z-20 shrink-0">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
+          <h2 id="room-name-display" class="font-bold text-white text-lg">Sala</h2>
         </div>
+        <div class="flex items-center gap-2 bg-discord-tertiary px-3 py-1.5 rounded-full border border-white/5">
+          <div class="w-2 h-2 rounded-full bg-discord-green animate-pulse"></div>
+          <span class="text-xs font-semibold text-discord-green">Conectado</span>
+        </div>
+      </header>
 
-        <button id="leave-room-btn" class="danger" style="background-color: #ed4245;">Sair</button>
+      <!-- Video Grid -->
+      <main id="video-grid" class="flex-1 overflow-y-auto p-4 flex flex-wrap content-start justify-center gap-4 relative z-0"></main>
+
+      <!-- Floating Bottom Dock -->
+      <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-30">
+        <div class="bg-discord-main/90 backdrop-blur-xl rounded-full px-2 py-2 flex items-center gap-2 shadow-2xl border border-white/10">
+          
+          <button id="mic-toggle-btn" title="Mutar Microfone" class="w-12 h-12 rounded-full flex items-center justify-center bg-discord-secondary hover:bg-zinc-700 transition-all duration-200 text-white active:scale-95 group">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+          </button>
+          
+          <div class="h-8 w-px bg-white/10 mx-1"></div>
+          
+          <div class="flex items-center bg-discord-secondary rounded-full p-1 border border-transparent focus-within:border-discord-blurple/50 transition-colors group">
+            <select id="quality-selector" class="bg-transparent text-sm font-semibold text-zinc-300 outline-none pl-3 pr-1 py-2 cursor-pointer appearance-none">
+              <option value="1080">1080p60</option>
+              <option value="720">720p30</option>
+            </select>
+            <button id="screen-share-btn" title="Compartilhar Tela" class="w-10 h-10 rounded-full flex items-center justify-center bg-transparent hover:bg-zinc-600 transition-all text-zinc-300">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            </button>
+          </div>
+
+          <div class="h-8 w-px bg-white/10 mx-1"></div>
+          
+          <button id="leave-room-btn" title="Sair da Sala" class="w-12 h-12 rounded-full flex items-center justify-center bg-discord-red hover:bg-red-600 transition-all duration-200 text-white active:scale-95 shadow-lg shadow-red-500/20">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+          </button>
+        </div>
       </div>
     </div>
-    
-    <!-- Text Chat -->
-    <div class="chat-container">
-      <div class="chat-header">Chat de Texto</div>
-      <div id="chat-messages"></div>
-      <form id="chat-form">
-        <input type="text" id="chat-input" placeholder="Enviar mensagem..." autocomplete="off">
-        <button type="submit">Enviar</button>
+
+    <!-- Sidebar Chat -->
+    <div class="w-full md:w-80 bg-discord-secondary flex flex-col border-t md:border-t-0 md:border-l border-white/5 shrink-0 z-20 shadow-xl relative">
+      <div class="h-14 flex items-center px-4 border-b border-white/5 font-semibold text-white shadow-sm shrink-0">
+        <svg class="w-5 h-5 text-zinc-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+        Chat da Sala
+      </div>
+      
+      <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+        <!-- Messages will be injected here -->
+      </div>
+      
+      <form id="chat-form" class="p-4 bg-discord-tertiary border-t border-white/5 pb-safe">
+        <div class="relative">
+          <input type="text" id="chat-input" placeholder="Conversar na sala..." autocomplete="off" class="w-full bg-discord-main text-white pl-4 pr-12 py-3 rounded-xl border border-transparent focus:border-zinc-700 outline-none transition-colors text-sm">
+          <button type="submit" class="absolute inset-y-1 right-1 px-3 bg-discord-blurple hover:bg-discord-blurpleHover text-white rounded-lg flex items-center justify-center transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+          </button>
+        </div>
       </form>
     </div>
+    
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
