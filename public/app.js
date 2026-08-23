@@ -69,6 +69,35 @@ function showToast(message, type = 'error') {
   }, 4000);
 }
 
+// --- Auto-Hide UI Logic ---
+let idleTimeout;
+const mainArea = document.getElementById('main-area');
+
+function resetIdleTimer() {
+  const fadeables = document.querySelectorAll('.ui-fadeable');
+  fadeables.forEach(el => el.classList.remove('opacity-0', 'pointer-events-none'));
+  if (mainArea) mainArea.style.cursor = 'default';
+  
+  clearTimeout(idleTimeout);
+  
+  if (!appSection.classList.contains('hidden-section')) {
+    idleTimeout = setTimeout(() => {
+      // Don't hide if mouse is hovering over a fadeable element (like the dock)
+      let isHovering = false;
+      fadeables.forEach(el => { if (el.matches(':hover')) isHovering = true; });
+      
+      if (!isHovering) {
+        fadeables.forEach(el => el.classList.add('opacity-0', 'pointer-events-none'));
+        if (mainArea) mainArea.style.cursor = 'none';
+      }
+    }, 3000); // 3 seconds idle
+  }
+}
+
+window.addEventListener('mousemove', resetIdleTimer);
+window.addEventListener('click', resetIdleTimer);
+window.addEventListener('keydown', resetIdleTimer);
+
 // --- Tabs Logic ---
 tabCreate.addEventListener('click', () => {
   currentTab = 'create';
@@ -372,7 +401,7 @@ function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially = false)
     videoEl.style.display = hasVideo ? 'block' : 'none';
     
     const labelEl = document.createElement('div');
-    labelEl.className = 'absolute bottom-3 left-3 bg-black/60 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-xs font-bold pointer-events-none z-10 shadow-sm border border-white/5';
+    labelEl.className = 'ui-fadeable transition-opacity duration-500 absolute bottom-3 left-3 bg-black/60 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-xs font-bold pointer-events-none z-10 shadow-sm border border-white/5';
     labelEl.innerText = hasVideo ? `${peerUsername} (Tela)` : peerUsername;
     
     const avatarEl = document.createElement('div');
