@@ -67,14 +67,19 @@ async function enterRoom() {
   }
 
   if (currentTab === 'create') {
-    socket.emit('create-room', roomId, (response) => {
+    socket.emit('create-room', { roomId, username }, (response) => {
       if (response.success) proceedToRoom();
       else alert(response.message);
     });
   } else {
-    socket.emit('check-room', roomId, (response) => {
-      if (response.exists) proceedToRoom();
-      else alert('Esta sala não existe. Verifique o nome ou crie uma nova na aba "Criar Sala".');
+    socket.emit('check-room', { roomId, username }, (response) => {
+      if (!response.exists) {
+        alert('Esta sala não existe. Verifique o nome ou crie uma nova na aba "Criar Sala".');
+      } else if (!response.success) {
+        alert(response.message);
+      } else {
+        proceedToRoom();
+      }
     });
   }
 }

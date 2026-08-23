@@ -14,11 +14,28 @@ const users = {}; // socket.id -> { username, roomId }
 
 io.on('connection', socket => {
   
-  socket.on('check-room', (roomId, callback) => {
-    callback({ exists: activeRooms.has(roomId) });
+  socket.on('check-room', (data, callback) => {
+    // Para retrocompatibilidade caso cliente envie string (versões antigas em cache)
+    const roomId = typeof data === 'string' ? data : data.roomId;
+    const username = data.username;
+    
+    if (!activeRooms.has(roomId)) {
+      callback({ exists: false });
+      return;
+    }
+    
+    if (username) {
+      const isTaken = Object.values(users).some(u => u.roomId === roomId && u.username.toLowerCase() === username.toLowerCase());
+      if (isTaken) {
+        callback({ exists: true, success: false, message: 'Este nome de usuário já está em uso na sala.' });
+        return;
+      }
+    }
+    callback({ exists: true, success: true });
   });
   
-  socket.on('create-room', (roomId, callback) => {
+  socket.on('create-room', (data, callback) => {
+    const roomId = typeof data === 'string' ? data : data.roomId;
     if (activeRooms.has(roomId)) {
       callback({ success: false, message: 'Sala já existe. Escolha outro nome.' });
     } else {
