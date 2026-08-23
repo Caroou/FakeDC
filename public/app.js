@@ -333,10 +333,10 @@ function createPeerConnection(userId, peerUsername) {
           if (videoTransceiver && typeof RTCRtpReceiver !== 'undefined' && RTCRtpReceiver.getCapabilities) {
             const capabilities = RTCRtpReceiver.getCapabilities('video');
             if (capabilities && capabilities.codecs) {
-              const vp9Codecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() === 'video/vp9');
-              if (vp9Codecs.length > 0) {
-                const otherCodecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() !== 'video/vp9');
-                videoTransceiver.setCodecPreferences([...vp9Codecs, ...otherCodecs]);
+              const h264Codecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() === 'video/h264');
+              if (h264Codecs.length > 0) {
+                const otherCodecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() !== 'video/h264');
+                videoTransceiver.setCodecPreferences([...h264Codecs, ...otherCodecs]);
               }
             }
           }
@@ -634,7 +634,7 @@ screenShareBtn.addEventListener('click', async () => {
       const screenAudioTrack = screenStream.getAudioTracks()[0];
       
       if (screenVideoTrack && 'contentHint' in screenVideoTrack) {
-        screenVideoTrack.contentHint = 'detail'; 
+        // Removed contentHint to fix video pixelation 
       }
       
       for (const userId in peers) {
@@ -663,10 +663,10 @@ screenShareBtn.addEventListener('click', async () => {
             if (videoTransceiver && typeof RTCRtpReceiver !== 'undefined' && RTCRtpReceiver.getCapabilities) {
               const capabilities = RTCRtpReceiver.getCapabilities('video');
               if (capabilities && capabilities.codecs) {
-                const vp9Codecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() === 'video/vp9');
-                if (vp9Codecs.length > 0) {
-                  const otherCodecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() !== 'video/vp9');
-                  videoTransceiver.setCodecPreferences([...vp9Codecs, ...otherCodecs]);
+                const h264Codecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() === 'video/h264');
+                if (h264Codecs.length > 0) {
+                  const otherCodecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() !== 'video/h264');
+                  videoTransceiver.setCodecPreferences([...h264Codecs, ...otherCodecs]);
                 }
               }
             }
