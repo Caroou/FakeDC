@@ -9,7 +9,9 @@ const createSection = document.getElementById('create-section');
 const joinSection = document.getElementById('join-section');
 const actionBtn = document.getElementById('action-btn'); // Unified button
 const createRoomInput = document.getElementById('create-room-input');
+const createPinInput = document.getElementById('create-pin-input');
 const joinRoomInput = document.getElementById('join-room-input');
+const joinPinInput = document.getElementById('join-pin-input');
 const usernameInput = document.getElementById('username-input');
 
 const chatMessages = document.getElementById('chat-messages');
@@ -21,6 +23,60 @@ const micToggleBtn = document.getElementById('mic-toggle-btn');
 const leaveRoomBtn = document.getElementById('leave-room-btn');
 const roomNameDisplay = document.getElementById('room-name-display');
 const globalMutedCheckbox = document.getElementById('global-muted-checkbox');
+
+// --- E2EE Crypto Logic ---
+let chatCryptoKey = null;
+
+async function deriveKey(roomId, pin) {
+  const encoder = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(roomId + pin),
+    "PBKDF2",
+    false,
+    ["deriveBits", "deriveKey"]
+  );
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: encoder.encode(roomId), iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    true,
+    ["encrypt", "decrypt"]
+  );
+}
+
+function bufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i++) { binary += String.fromCharCode(bytes[i]); }
+  return window.btoa(binary);
+}
+
+function base64ToBuffer(base64) {
+  const binary_string = window.atob(base64);
+  const len = binary_string.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) { bytes[i] = binary_string.charCodeAt(i); }
+  return bytes.buffer;
+}
+
+async function encryptMessage(text, key) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encoded = new TextEncoder().encode(text);
+  const cipherText = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, encoded);
+  return { iv: bufferToBase64(iv), cipherText: bufferToBase64(cipherText) };
+}
+
+async function decryptMessage(encryptedData, key) {
+  try {
+    const iv = base64ToBuffer(encryptedData.iv);
+    const cipherText = base64ToBuffer(encryptedData.cipherText);
+    const decryptedText = await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, cipherText);
+    return new TextDecoder().decode(decryptedText);
+  } catch (e) {
+    return "[Mensagem criptografada ilegível]";
+  }
+}
 
 let localStream;
 let screenStream;
@@ -124,6 +180,7 @@ tabJoin.addEventListener('click', () => {
 async function enterRoom() {
   username = usernameInput.value.trim();
   roomId = currentTab === 'create' ? createRoomInput.value.trim() : joinRoomInput.value.trim();
+  const pin = currentTab === 'create' ? createPinInput.value.trim() : joinPinInput.value.trim();
   
   if (!roomId || !username) {
     showToast('Por favor, preencha o nome e a sala.', 'error');
@@ -131,17 +188,22 @@ async function enterRoom() {
   }
 
   if (currentTab === 'create') {
-    socket.emit('create-room', { roomId, username }, (response) => {
-      if (response.success) proceedToRoom();
-      else showToast(response.message, 'error');
+    socket.emit('create-room', { roomId, username, pin }, async (response) => {
+      if (response.success) {
+        chatCryptoKey = await deriveKey(roomId, pin);
+        proceedToRoom();
+      } else {
+        showToast(response.message, 'error');
+      }
     });
   } else {
-    socket.emit('check-room', { roomId, username }, (response) => {
+    socket.emit('check-room', { roomId, username, pin }, async (response) => {
       if (!response.exists) {
         showToast('Esta sala não existe. Verifique o nome ou crie uma nova.', 'error');
       } else if (!response.success) {
         showToast(response.message, 'error');
       } else {
+        chatCryptoKey = await deriveKey(roomId, pin);
         proceedToRoom();
       }
     });
@@ -211,8 +273,9 @@ socket.on('user-disconnected', userId => {
   }
 });
 
-socket.on('chat-message', data => {
-  addMessage(data.username, data.message);
+socket.on('chat-message', async data => {
+  const decryptedMsg = await decryptMessage(data.message, chatCryptoKey);
+  addMessage(data.username, decryptedMsg);
 });
 
 socket.on('user-muted', (userId, isMuted) => {
@@ -573,12 +636,16 @@ function removeVideo(userId) {
 }
 
 // --- Chat Logic ---
-chatForm.addEventListener('submit', e => {
+chatForm.addEventListener('submit', async e => {
   e.preventDefault();
   const msg = chatInput.value.trim();
   if (msg) {
     addMessage('Você', msg);
-    socket.emit('chat-message', msg);
+    
+    // Encrypt message
+    const encryptedMsg = await encryptMessage(msg, chatCryptoKey);
+    socket.emit('chat-message', encryptedMsg);
+    
     chatInput.value = '';
   }
 });

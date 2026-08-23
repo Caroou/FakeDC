@@ -9,8 +9,8 @@ const path = require('path');
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Mantém registro das salas e dos usuários ativos
-const activeRooms = new Set();
-const users = {}; // socket.id -> { username, roomId }
+const activeRooms = new Map(); // roomId -> { pin: string }
+const users = {}; // socket.id -> { username, roomId, isMuted }
 
 io.on('connection', socket => {
   
@@ -18,9 +18,16 @@ io.on('connection', socket => {
     // Para retrocompatibilidade caso cliente envie string (versões antigas em cache)
     const roomId = typeof data === 'string' ? data : data.roomId;
     const username = data.username;
+    const pin = data.pin || '';
     
     if (!activeRooms.has(roomId)) {
       callback({ exists: false });
+      return;
+    }
+
+    const roomData = activeRooms.get(roomId);
+    if (roomData.pin && roomData.pin !== pin) {
+      callback({ exists: true, success: false, message: 'Senha da sala incorreta.' });
       return;
     }
     
@@ -36,10 +43,11 @@ io.on('connection', socket => {
   
   socket.on('create-room', (data, callback) => {
     const roomId = typeof data === 'string' ? data : data.roomId;
+    const pin = data.pin || '';
     if (activeRooms.has(roomId)) {
       callback({ success: false, message: 'Sala já existe. Escolha outro nome.' });
     } else {
-      activeRooms.add(roomId);
+      activeRooms.set(roomId, { pin });
       callback({ success: true });
     }
   });
@@ -49,7 +57,11 @@ io.on('connection', socket => {
     socket.roomId = roomId;
     socket.username = username;
     users[socket.id] = { username, roomId, isMuted: false };
-    activeRooms.add(roomId); 
+    
+    // Se a sala não existir (fallback), cria sem senha
+    if (!activeRooms.has(roomId)) {
+      activeRooms.set(roomId, { pin: '' }); 
+    }
     
     // Avisa os outros usuários na sala
     socket.to(roomId).emit('user-connected', socket.id, username);

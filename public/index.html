@@ -90,6 +90,7 @@
           </div>
         </div>
 
+        <!-- Join Room Section -->
         <div id="join-section" class="space-y-4">
           <div>
             <label class="block text-xs font-bold text-zinc-400 uppercase tracking-wide mb-1.5">ID da Sala</label>
@@ -100,8 +101,18 @@
               <input type="text" id="join-room-input" placeholder="Nome ou ID da sala" autocomplete="off" class="w-full bg-discord-main text-white pl-10 pr-4 py-3 rounded-xl border border-zinc-700/50 focus:border-discord-blurple focus:ring-1 focus:ring-discord-blurple outline-none transition-all duration-200">
             </div>
           </div>
+          <div>
+            <label class="block text-xs font-bold text-zinc-400 uppercase tracking-wide mb-1.5">Senha da Sala</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+              </div>
+              <input type="password" id="join-pin-input" placeholder="Senha (se houver)" autocomplete="off" class="w-full bg-discord-main text-white pl-10 pr-4 py-3 rounded-xl border border-zinc-700/50 focus:border-discord-blurple focus:ring-1 focus:ring-discord-blurple outline-none transition-all duration-200">
+            </div>
+          </div>
         </div>
         
+        <!-- Create Room Section -->
         <div id="create-section" class="hidden-section space-y-4">
           <div>
             <label class="block text-xs font-bold text-zinc-400 uppercase tracking-wide mb-1.5">Criar Nova Sala</label>
@@ -110,6 +121,15 @@
                 <svg class="h-5 w-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
               </div>
               <input type="text" id="create-room-input" placeholder="Defina um ID para a sala" autocomplete="off" class="w-full bg-discord-main text-white pl-10 pr-4 py-3 rounded-xl border border-zinc-700/50 focus:border-discord-blurple focus:ring-1 focus:ring-discord-blurple outline-none transition-all duration-200">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-zinc-400 uppercase tracking-wide mb-1.5">Senha (Opcional)</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+              </div>
+              <input type="password" id="create-pin-input" placeholder="Deixe em branco para sala pública" autocomplete="off" class="w-full bg-discord-main text-white pl-10 pr-4 py-3 rounded-xl border border-zinc-700/50 focus:border-discord-blurple focus:ring-1 focus:ring-discord-blurple outline-none transition-all duration-200">
             </div>
           </div>
         </div>
