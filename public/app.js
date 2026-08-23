@@ -261,7 +261,16 @@ function createPeerConnection(userId, peerUsername) {
   pc.onnegotiationneeded = async () => {
     try {
       peerObj.makingOffer = true;
-      await pc.setLocalDescription();
+      let offer = await pc.createOffer();
+      
+      // SDP Munging para forçar banda inicial e evitar o "ramp-up" de qualidade
+      if (screenStream) {
+        if (!offer.sdp.includes('b=AS:8000')) {
+          offer.sdp = offer.sdp.replace(/(m=video.*\r\n)/g, '$1b=AS:8000\r\n');
+        }
+      }
+      
+      await pc.setLocalDescription(offer);
       socket.emit('signal', { to: userId, signal: pc.localDescription });
     } catch (err) {
       console.error(err);
@@ -357,7 +366,11 @@ socket.on('signal', async ({ from, signal, username: signalUsername, isMuted: si
       await pc.setRemoteDescription(new RTCSessionDescription(signal));
       
       if (signal.type === 'offer') {
-        await pc.setLocalDescription();
+        let answer = await pc.createAnswer();
+        if (screenStream && !answer.sdp.includes('b=AS:8000')) {
+          answer.sdp = answer.sdp.replace(/(m=video.*\r\n)/g, '$1b=AS:8000\r\n');
+        }
+        await pc.setLocalDescription(answer);
         socket.emit('signal', { to: from, signal: pc.localDescription });
       }
     } else if (signal.candidate) {
@@ -603,10 +616,10 @@ micToggleBtn.addEventListener('click', () => {
 screenShareBtn.addEventListener('click', async () => {
   if (!screenStream) {
     try {
-      const quality = qualitySelector ? qualitySelector.value : '1080';
-      const videoConstraints = quality === '1080' ? 
-        { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 60, max: 60 } } :
-        { width: { ideal: 1280, max: 1280 }, height: { ideal: 720, max: 720 }, frameRate: { ideal: 30, max: 30 } };
+        const quality = qualitySelector ? qualitySelector.value : '1080';
+        const videoConstraints = quality === '1080' ? 
+          { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 60, max: 60 }, resizeMode: 'none' } :
+          { width: { ideal: 1280, max: 1280 }, height: { ideal: 720, max: 720 }, frameRate: { ideal: 30, max: 30 }, resizeMode: 'none' };
 
       screenStream = await navigator.mediaDevices.getDisplayMedia({ 
         video: videoConstraints, 
