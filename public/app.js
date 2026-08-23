@@ -93,9 +93,14 @@ function resetIdleTimer() {
   }
 }
 
-window.addEventListener('mousemove', resetIdleTimer);
-window.addEventListener('click', resetIdleTimer);
-window.addEventListener('keydown', resetIdleTimer);
+mainArea.addEventListener('mousemove', resetIdleTimer);
+mainArea.addEventListener('click', resetIdleTimer);
+mainArea.addEventListener('mouseleave', () => {
+  clearTimeout(idleTimeout);
+  const fadeables = document.querySelectorAll('.ui-fadeable');
+  fadeables.forEach(el => el.classList.add('opacity-0', 'pointer-events-none'));
+  if (mainArea) mainArea.style.cursor = 'default';
+});
 
 // --- Tabs Logic ---
 tabCreate.addEventListener('click', () => {
