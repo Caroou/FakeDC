@@ -52,13 +52,13 @@
 <body class="bg-discord-main text-zinc-300 font-sans h-screen w-screen overflow-hidden flex flex-col selection:bg-discord-blurple selection:text-white">
 
   <!-- ================= LOBBY ================= -->
-  <div id="login-section" class="flex-1 flex items-center justify-center relative min-h-screen">
+  <div id="login-section" class="flex-1 flex items-center justify-center relative min-h-screen px-4">
     <!-- Subtle Background Glow -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
       <div class="w-[500px] h-[500px] bg-discord-blurple/20 rounded-full blur-[100px]"></div>
     </div>
     
-    <div class="bg-discord-secondary p-8 rounded-2xl shadow-2xl z-10 w-full max-w-md border border-zinc-700/50 glow-effect">
+    <div class="bg-discord-secondary p-6 sm:p-8 rounded-2xl shadow-2xl z-10 w-full max-w-md border border-zinc-700/50 glow-effect">
       
       <!-- Logo -->
       <div class="flex flex-col items-center mb-8">
@@ -179,7 +179,7 @@
     </div>
 
     <!-- Sidebar Chat -->
-    <div class="w-full md:w-80 bg-discord-secondary flex flex-col border-t md:border-t-0 md:border-l border-white/5 shrink-0 z-20 shadow-xl relative">
+    <div class="w-full h-[40vh] md:h-auto md:w-80 bg-discord-secondary flex flex-col border-t md:border-t-0 md:border-l border-white/5 shrink-0 z-20 shadow-xl relative">
       <div class="h-14 flex items-center px-4 border-b border-white/5 font-semibold text-white shadow-sm shrink-0">
         <svg class="w-5 h-5 text-zinc-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
         Chat da Sala

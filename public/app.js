@@ -290,16 +290,16 @@ function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially = false)
     containerEl = document.createElement('div');
     containerEl.id = `media-${mediaId}`;
     containerEl.className = 'media-container group relative bg-discord-secondary rounded-2xl overflow-hidden flex items-center justify-center cursor-pointer transition-all duration-300 ring-2 ring-transparent shadow-xl shrink-0 border border-white/5';
-    containerEl.style.flex = '1 1 280px';
-    containerEl.style.maxWidth = '400px';
+    containerEl.style.flex = '1 1 200px';
+    containerEl.style.maxWidth = '100%';
     containerEl.style.aspectRatio = '16/9';
     
     containerEl.addEventListener('click', () => {
       const isFocused = containerEl.classList.contains('focused');
       document.querySelectorAll('.media-container.focused').forEach(el => {
         el.classList.remove('focused');
-        el.style.flex = '1 1 280px';
-        el.style.maxWidth = '400px';
+        el.style.flex = '1 1 200px';
+        el.style.maxWidth = '100%';
         el.style.height = 'auto';
         el.classList.add('rounded-2xl');
       });
