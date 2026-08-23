@@ -21,7 +21,6 @@ const micToggleBtn = document.getElementById('mic-toggle-btn');
 const leaveRoomBtn = document.getElementById('leave-room-btn');
 const roomNameDisplay = document.getElementById('room-name-display');
 const globalMutedCheckbox = document.getElementById('global-muted-checkbox');
-const qualitySelector = document.getElementById('quality-selector');
 
 let localStream;
 let screenStream;
@@ -319,9 +318,9 @@ function createPeerConnection(userId, peerUsername) {
         try {
           const params = sender.getParameters();
           if (!params.encodings) params.encodings = [{}];
-          const quality = qualitySelector ? qualitySelector.value : '1080';
-          params.encodings[0].maxBitrate = quality === '1080' ? 8000000 : 4000000;
-          params.encodings[0].scaleResolutionDownBy = 1.0; 
+          
+          params.encodings[0].maxBitrate = 8000000;
+           
           sender.setParameters(params).catch(e => console.warn(e));
         } catch (e) {
           console.warn("Failed to set bitrate for late joiner", e);
@@ -616,10 +615,7 @@ micToggleBtn.addEventListener('click', () => {
 screenShareBtn.addEventListener('click', async () => {
   if (!screenStream) {
     try {
-        const quality = qualitySelector ? qualitySelector.value : '1080';
-        const videoConstraints = quality === '1080' ? 
-          { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 60, max: 60 }, resizeMode: 'none' } :
-          { width: { ideal: 1280, max: 1280 }, height: { ideal: 720, max: 720 }, frameRate: { ideal: 30, max: 30 }, resizeMode: 'none' };
+        const videoConstraints = { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 60, max: 60 } };
 
       screenStream = await navigator.mediaDevices.getDisplayMedia({ 
         video: videoConstraints, 
@@ -649,8 +645,7 @@ screenShareBtn.addEventListener('click', async () => {
             if (!params.encodings) {
               params.encodings = [{}];
             }
-            params.encodings[0].maxBitrate = quality === '1080' ? 8000000 : 4000000;
-            params.encodings[0].scaleResolutionDownBy = 1.0; 
+            params.encodings[0].maxBitrate = 8000000;
             sender.setParameters(params).catch(e => console.warn(e));
           } catch (e) {
             console.warn("Failed to prepare parameters", e);
