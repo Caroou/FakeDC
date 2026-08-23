@@ -38,6 +38,37 @@ const ICE_SERVERS = {
   ]
 };
 
+// --- Toast System ---
+function showToast(message, type = 'error') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  
+  const toast = document.createElement('div');
+  const bgColor = type === 'error' ? 'bg-discord-red' : 'bg-discord-green';
+  
+  toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 transform transition-all duration-300 translate-x-full opacity-0 pointer-events-auto max-w-sm`;
+  
+  const iconSvg = type === 'error' 
+    ? '<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+    : '<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+    
+  toast.innerHTML = `${iconSvg}<span class="text-sm font-medium">${message}</span>`;
+  
+  container.appendChild(toast);
+  
+  // Trigger animation next frame
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      toast.classList.remove('translate-x-full', 'opacity-0');
+    });
+  });
+  
+  setTimeout(() => {
+    toast.classList.add('translate-x-full', 'opacity-0');
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
 // --- Tabs Logic ---
 tabCreate.addEventListener('click', () => {
   currentTab = 'create';
@@ -62,21 +93,21 @@ async function enterRoom() {
   roomId = currentTab === 'create' ? createRoomInput.value.trim() : joinRoomInput.value.trim();
   
   if (!roomId || !username) {
-    alert('Por favor, preencha o nome e a sala.');
+    showToast('Por favor, preencha o nome e a sala.', 'error');
     return;
   }
 
   if (currentTab === 'create') {
     socket.emit('create-room', { roomId, username }, (response) => {
       if (response.success) proceedToRoom();
-      else alert(response.message);
+      else showToast(response.message, 'error');
     });
   } else {
     socket.emit('check-room', { roomId, username }, (response) => {
       if (!response.exists) {
-        alert('Esta sala não existe. Verifique o nome ou crie uma nova na aba "Criar Sala".');
+        showToast('Esta sala não existe. Verifique o nome ou crie uma nova.', 'error');
       } else if (!response.success) {
-        alert(response.message);
+        showToast(response.message, 'error');
       } else {
         proceedToRoom();
       }
@@ -93,6 +124,7 @@ async function proceedToRoom() {
     appSection.classList.remove('hidden-section');
     
     roomNameDisplay.innerText = `# ${roomId}`;
+    showToast(`Conectado à sala ${roomId}`, 'success');
     
     addRemoteMedia('local-mic', localStream, `${username} (Você)`, isMicMuted);
     
@@ -101,7 +133,7 @@ async function proceedToRoom() {
     
   } catch (error) {
     console.error('Error accessing media devices.', error);
-    alert('Erro ao acessar o microfone. Verifique as permissões de acesso e recarregue a página.');
+    showToast('Erro ao acessar o microfone. Verifique as permissões.', 'error');
   }
 }
 
