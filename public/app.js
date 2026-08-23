@@ -303,7 +303,38 @@ function createPeerConnection(userId, peerUsername) {
   };
 
   if (localStream) localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-  if (screenStream) screenStream.getTracks().forEach(track => pc.addTrack(track, screenStream));
+  if (screenStream) {
+    screenStream.getTracks().forEach(track => {
+      const sender = pc.addTrack(track, screenStream);
+      if (track.kind === 'video') {
+        try {
+          const params = sender.getParameters();
+          if (!params.encodings) params.encodings = [{}];
+          const quality = qualitySelector ? qualitySelector.value : '1080';
+          params.encodings[0].maxBitrate = quality === '1080' ? 8000000 : 4000000;
+          params.encodings[0].scaleResolutionDownBy = 1.0; 
+          sender.setParameters(params).catch(e => console.warn(e));
+        } catch (e) {
+          console.warn("Failed to set bitrate for late joiner", e);
+        }
+        
+        try {
+          const transceivers = pc.getTransceivers();
+          const videoTransceiver = transceivers.find(t => t.sender === sender);
+          if (videoTransceiver && typeof RTCRtpReceiver !== 'undefined' && RTCRtpReceiver.getCapabilities) {
+            const capabilities = RTCRtpReceiver.getCapabilities('video');
+            if (capabilities && capabilities.codecs) {
+              const h264Codecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() === 'video/h264');
+              if (h264Codecs.length > 0) {
+                const otherCodecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() !== 'video/h264');
+                videoTransceiver.setCodecPreferences([...h264Codecs, ...otherCodecs]);
+              }
+            }
+          }
+        } catch (e) {}
+      }
+    });
+  }
   
   return peerObj;
 }
@@ -598,6 +629,19 @@ screenShareBtn.addEventListener('click', async () => {
         
         if (screenVideoTrack) {
           const sender = pc.addTrack(screenVideoTrack, screenStream);
+          
+          // Force maximum bitrate (8 Mbps for 1080p, 4 Mbps for 720p)
+          try {
+            const params = sender.getParameters();
+            if (!params.encodings) {
+              params.encodings = [{}];
+            }
+            params.encodings[0].maxBitrate = quality === '1080' ? 8000000 : 4000000;
+            params.encodings[0].scaleResolutionDownBy = 1.0; 
+            sender.setParameters(params).catch(e => console.warn(e));
+          } catch (e) {
+            console.warn("Failed to prepare parameters", e);
+          }
           
           try {
             const transceivers = pc.getTransceivers();
