@@ -49,7 +49,7 @@
     .hidden-section { display: none !important; }
   </style>
 </head>
-<body class="bg-discord-main text-zinc-300 font-sans h-screen w-screen overflow-hidden flex flex-col selection:bg-discord-blurple selection:text-white">
+<body class="bg-discord-main text-zinc-300 font-sans h-[100dvh] w-screen overflow-hidden flex flex-col selection:bg-discord-blurple selection:text-white">
 
   <!-- ================= LOBBY ================= -->
   <div id="login-section" class="flex-1 flex items-center justify-center relative min-h-screen px-4">
@@ -129,10 +129,10 @@
   </div>
 
   <!-- ================= APP SECTION ================= -->
-  <div id="app-section" class="hidden-section w-full h-full flex flex-col md:flex-row">
+  <div id="app-section" class="hidden-section w-full h-full flex flex-col md:flex-row min-h-0">
     
     <!-- Main Area (Video Grid + Top Header + Bottom Dock) -->
-    <div class="flex-1 flex flex-col min-w-0 relative">
+    <div class="flex-1 flex flex-col min-w-0 min-h-0 relative">
       
       <!-- Top Header -->
       <header class="bg-discord-secondary/80 backdrop-blur-md h-14 flex items-center justify-between px-6 border-b border-white/5 z-20 shrink-0">
@@ -189,7 +189,7 @@
         <!-- Messages will be injected here -->
       </div>
       
-      <form id="chat-form" class="p-4 bg-discord-tertiary border-t border-white/5 pb-safe">
+      <form id="chat-form" class="p-4 bg-discord-tertiary border-t border-white/5" style="padding-bottom: max(16px, env(safe-area-inset-bottom));">
         <div class="relative">
           <input type="text" id="chat-input" placeholder="Conversar na sala..." autocomplete="off" class="w-full bg-discord-main text-white pl-4 pr-12 py-3 rounded-xl border border-transparent focus:border-zinc-700 outline-none transition-colors text-sm">
           <button type="submit" class="absolute inset-y-1 right-1 px-3 bg-discord-blurple hover:bg-discord-blurpleHover text-white rounded-lg flex items-center justify-center transition-colors">
