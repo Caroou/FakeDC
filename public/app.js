@@ -233,15 +233,23 @@ async function proceedToRoom() {
 }
 
 async function initMedia() {
-  localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
-  
-  if (globalMutedCheckbox && globalMutedCheckbox.checked) {
-    const audioTrack = localStream.getAudioTracks()[0];
-    if (audioTrack) {
-      audioTrack.enabled = false;
-      isMicMuted = true;
-      updateMicButtonUI();
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+    
+    if (globalMutedCheckbox && globalMutedCheckbox.checked) {
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = false;
+        isMicMuted = true;
+        updateMicButtonUI();
+      }
     }
+  } catch (err) {
+    console.warn("Microfone não encontrado ou bloqueado. Entrando como espectador.", err);
+    localStream = null;
+    isMicMuted = true; // Espectadores estão sempre mutados
+    updateMicButtonUI();
+    showToast('Acesso ao microfone bloqueado ou ausente. Você entrou no Modo Espectador.', 'error');
   }
 }
 
@@ -681,6 +689,8 @@ micToggleBtn.addEventListener('click', () => {
       const localInd = document.getElementById('mute-indicator-local-mic');
       if (localInd) localInd.style.display = isMicMuted ? 'flex' : 'none';
     }
+  } else {
+    showToast('Nenhum microfone detectado. Você está no Modo Espectador.', 'error');
   }
 });
 
