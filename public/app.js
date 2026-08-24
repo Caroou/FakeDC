@@ -464,7 +464,7 @@ socket.on('signal', async ({ from, signal, username: signalUsername, isMuted: si
 function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially = false) {
   let containerEl = document.getElementById(`media-${mediaId}`);
   
-  const hasVideo = stream.getVideoTracks().length > 0;
+  const hasVideo = stream ? stream.getVideoTracks().length > 0 : false;
   
   if (!containerEl) {
     containerEl = document.createElement('div');
@@ -614,7 +614,7 @@ function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially = false)
 function updateMediaVisibility(mediaId, stream) {
   const containerEl = document.getElementById(`media-${mediaId}`);
   if (containerEl) {
-    const hasAnyTrack = stream.getTracks().length > 0;
+    const hasAnyTrack = stream ? stream.getTracks().length > 0 : false;
     if (!hasAnyTrack) {
       if (containerEl.classList.contains('focused')) {
         // Reset grid
