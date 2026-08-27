@@ -177,7 +177,10 @@ tabJoin.addEventListener('click', () => {
   actionBtn.innerText = 'Conectar à Sala';
 });
 
+let isConnecting = false;
 async function enterRoom() {
+  if (isConnecting) return;
+  
   username = usernameInput.value.trim();
   roomId = currentTab === 'create' ? createRoomInput.value.trim() : joinRoomInput.value.trim();
   const pin = currentTab === 'create' ? createPinInput.value.trim() : joinPinInput.value.trim();
@@ -187,24 +190,37 @@ async function enterRoom() {
     return;
   }
 
+  isConnecting = true;
+  actionBtn.disabled = true;
+  actionBtn.style.opacity = '0.7';
+
   if (currentTab === 'create') {
     socket.emit('create-room', { roomId, username, pin }, async (response) => {
       if (response.success) {
         chatCryptoKey = await deriveKey(roomId, pin);
-        proceedToRoom();
+        await proceedToRoom();
       } else {
         showToast(response.message, 'error');
+        isConnecting = false;
+        actionBtn.disabled = false;
+        actionBtn.style.opacity = '1';
       }
     });
   } else {
     socket.emit('check-room', { roomId, username, pin }, async (response) => {
       if (!response.exists) {
         showToast('Esta sala não existe. Verifique o nome ou crie uma nova.', 'error');
+        isConnecting = false;
+        actionBtn.disabled = false;
+        actionBtn.style.opacity = '1';
       } else if (!response.success) {
         showToast(response.message, 'error');
+        isConnecting = false;
+        actionBtn.disabled = false;
+        actionBtn.style.opacity = '1';
       } else {
         chatCryptoKey = await deriveKey(roomId, pin);
-        proceedToRoom();
+        await proceedToRoom();
       }
     });
   }
@@ -214,12 +230,16 @@ actionBtn.addEventListener('click', enterRoom);
 
 async function proceedToRoom() {
   try {
-    await initMedia();
+    const isSpectator = await initMedia();
     loginSection.classList.add('hidden-section');
     appSection.classList.remove('hidden-section');
     
     roomNameDisplay.innerText = `# ${roomId}`;
-    showToast(`Conectado à sala ${roomId}`, 'success');
+    
+    // Only show success toast if we didn't just show the spectator toast
+    if (!isSpectator) {
+      showToast(`Conectado à sala ${roomId}`, 'success');
+    }
     
     addRemoteMedia('local-mic', localStream, `${username} (Você)`, isMicMuted);
     
@@ -229,6 +249,9 @@ async function proceedToRoom() {
   } catch (error) {
     console.error('Error accessing media devices.', error);
     showToast('Erro ao acessar o microfone. Verifique as permissões.', 'error');
+    isConnecting = false;
+    actionBtn.disabled = false;
+    actionBtn.style.opacity = '1';
   }
 }
 
@@ -244,12 +267,14 @@ async function initMedia() {
         updateMicButtonUI();
       }
     }
+    return false; // Not a spectator
   } catch (err) {
     console.warn("Microfone não encontrado ou bloqueado. Entrando como espectador.", err);
     localStream = null;
-    isMicMuted = true; // Espectadores estão sempre mutados
+    isMicMuted = true; 
     updateMicButtonUI();
-    showToast('Acesso ao microfone bloqueado ou ausente. Você entrou no Modo Espectador.', 'error');
+    showToast('Acesso negado ao microfone. Você entrou no Modo Espectador.', 'error');
+    return true; // Is a spectator
   }
 }
 
