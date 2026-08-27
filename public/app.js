@@ -287,9 +287,12 @@ socket.on('chat-message', async data => {
 });
 
 socket.on('user-muted', (userId, isMuted) => {
-  const allMuteInds = document.querySelectorAll(`[id^="mute-indicator-${userId}-"]`);
+  const allMuteInds = [
+    document.getElementById(`mute-indicator-${userId}`),
+    document.getElementById(`mute-indicator-${userId}-screen`)
+  ];
   allMuteInds.forEach(el => {
-    el.style.display = isMuted ? 'flex' : 'none';
+    if (el) el.style.display = isMuted ? 'flex' : 'none';
   });
 });
 
@@ -309,16 +312,16 @@ if (window.AudioContext || window.webkitAudioContext) {
         }
         const average = sum / dataArray.length;
         
-        const mediaElements = document.querySelectorAll(`[id^="media-${userId}-"]`);
-        mediaElements.forEach(el => {
+        const mediaEl = document.getElementById(`media-${userId}`);
+        if (mediaEl) {
           if (average > 10) {
-            el.classList.add('ring-discord-green');
-            el.classList.remove('ring-transparent');
+            mediaEl.classList.add('ring-discord-green');
+            mediaEl.classList.remove('ring-transparent');
           } else {
-            el.classList.remove('ring-discord-green');
-            el.classList.add('ring-transparent');
+            mediaEl.classList.remove('ring-discord-green');
+            mediaEl.classList.add('ring-transparent');
           }
-        });
+        }
       }
     }
   }, 100);
@@ -326,12 +329,15 @@ if (window.AudioContext || window.webkitAudioContext) {
 
 
 // --- WebRTC Logic ---
-function createPeerConnection(userId, peerUsername) {
+function createPeerConnection(userId, peerUsername, isMuted = false) {
   const pc = new RTCPeerConnection(ICE_SERVERS);
   const isPolite = socket.id > userId;
   
-  const peerObj = { pc, isPolite, makingOffer: false, ignoreOffer: false, username: peerUsername, isMuted: false, analyser: null };
+  const peerObj = { pc, isPolite, makingOffer: false, ignoreOffer: false, username: peerUsername, isMuted, analyser: null };
   peers[userId] = peerObj;
+  
+  // Creates the main avatar bubble instantly
+  addRemoteMedia(userId, null, peerUsername, isMuted);
 
   pc.onnegotiationneeded = async () => {
     try {
@@ -361,7 +367,8 @@ function createPeerConnection(userId, peerUsername) {
   pc.ontrack = ({ track, streams }) => {
     let stream = streams[0];
     if (stream) {
-      const mediaId = `${userId}-${stream.id}`;
+      const isScreenShare = stream.getVideoTracks().length > 0;
+      const mediaId = isScreenShare ? `${userId}-screen` : userId;
       addRemoteMedia(mediaId, stream, peerObj.username, peerObj.isMuted);
       
       // Audio level analyser for "speaking" ring
@@ -425,7 +432,7 @@ function createPeerConnection(userId, peerUsername) {
 
 socket.on('signal', async ({ from, signal, username: signalUsername, isMuted: signalIsMuted }) => {
   let peerObj = peers[from];
-  if (!peerObj) peerObj = createPeerConnection(from, signalUsername);
+  if (!peerObj) peerObj = createPeerConnection(from, signalUsername, signalIsMuted);
 
   const { pc, isPolite } = peerObj;
   
@@ -630,16 +637,21 @@ function updateMediaVisibility(mediaId, stream) {
 }
 
 function removeVideo(userId) {
-  const elements = document.querySelectorAll(`[id^="media-${userId}-"]`);
+  const elements = [
+    document.getElementById(`media-${userId}`),
+    document.getElementById(`media-${userId}-screen`)
+  ];
   elements.forEach(el => {
-    if (el.classList.contains('focused')) {
-      videoGrid.classList.remove('p-0', 'gap-0', 'content-stretch', 'items-stretch');
-      videoGrid.classList.add('p-4', 'gap-4', 'content-start');
-      Array.from(videoGrid.children).forEach(child => {
-        child.style.display = 'flex';
-      });
+    if (el) {
+      if (el.classList.contains('focused')) {
+        videoGrid.classList.remove('p-0', 'gap-0', 'content-stretch', 'items-stretch');
+        videoGrid.classList.add('p-4', 'gap-4', 'content-start');
+        Array.from(videoGrid.children).forEach(child => {
+          child.style.display = 'flex';
+        });
+      }
+      el.remove();
     }
-    el.remove();
   });
 }
 
