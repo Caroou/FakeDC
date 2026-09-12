@@ -3,24 +3,63 @@ import { ICE_SERVERS, getProfile } from '../config.js';
 import { addRemoteMedia, updateMediaVisibility } from '../ui/mediaRenderer.js';
 import { getAudioContext } from '../ui/speaking.js';
 
+export function configureFastCodecs(videoTransceiver) {
+  if (!videoTransceiver || typeof RTCRtpReceiver === 'undefined' || !RTCRtpReceiver.getCapabilities) return;
+  try {
+    const capabilities = RTCRtpReceiver.getCapabilities('video');
+    if (capabilities && capabilities.codecs) {
+      // Prioritize modern multi-core GPU gaming codecs (VP9, AV1, VP8) over single-threaded OpenH264
+      const preferred = ['video/vp9', 'video/av01', 'video/vp8', 'video/h264'];
+      const prioritized = capabilities.codecs.filter((c) =>
+        preferred.includes(c.mimeType.toLowerCase())
+      );
+      prioritized.sort((a, b) => {
+        const idxA = preferred.indexOf(a.mimeType.toLowerCase());
+        const idxB = preferred.indexOf(b.mimeType.toLowerCase());
+        return idxA - idxB;
+      });
+      const others = capabilities.codecs.filter((c) =>
+        !preferred.includes(c.mimeType.toLowerCase())
+      );
+      if (prioritized.length > 0) {
+        videoTransceiver.setCodecPreferences([...prioritized, ...others]);
+      }
+    }
+  } catch (e) {
+    console.warn('Falha ao configurar preferências de codecs de alta velocidade', e);
+  }
+}
+
 export function applyBitrateToSdp(sdp, profile) {
   if (!sdp) return sdp;
   const kbps = Math.floor(profile.bitrate / 1000);
+  const bps = profile.bitrate;
   const minKbps = profile.minBitrateKbps || Math.floor(kbps * 0.5);
   const startKbps = profile.startBitrateKbps || Math.floor(kbps * 0.75);
 
   let result = sdp;
 
-  // 1. Force b=AS cleanly under m=video
+  // 1. Force b=AS (kbps) and b=TIAS (bps) under m=video
   if (result.includes('b=AS:')) {
     result = result.replace(/b=AS:\d+/g, `b=AS:${kbps}`);
   } else {
     result = result.replace(/(m=video[^\r\n]*(?:\r?\n))/g, (match, line) => `${line}b=AS:${kbps}\r\n`);
   }
 
-  // 2. Inject Google BWE minimum, start, and max bitrates into video fmtp lines (eliminates slow-start pixelation)
+  if (result.includes('b=TIAS:')) {
+    result = result.replace(/b=TIAS:\d+/g, `b=TIAS:${bps}`);
+  } else {
+    result = result.replace(/(b=AS:\d+[^\r\n]*(?:\r?\n))/g, (match, line) => `${line}b=TIAS:${bps}\r\n`);
+  }
+
+  // 2. Inject Google BWE minimum, start, and max bitrates into video fmtp lines
   const googleBwe = `x-google-min-bitrate=${minKbps};x-google-start-bitrate=${startKbps};x-google-max-bitrate=${kbps}`;
 
+  // Find all payload types in m=video
+  const videoMatch = result.match(/m=video\s+\d+\s+[\w/]+\s+([\d\s]+)/);
+  const videoPayloads = videoMatch ? videoMatch[1].trim().split(/\s+/) : [];
+
+  // Update existing fmtp lines
   result = result.replace(/(a=fmtp:\d+)(?!.*apt=)(.*)(\r?\n)/g, (match, prefix, rest, eol) => {
     if (rest.includes('x-google-min-bitrate')) {
       return match;
@@ -28,6 +67,15 @@ export function applyBitrateToSdp(sdp, profile) {
     const trimmed = rest.trim();
     const separator = (trimmed === '' || trimmed.endsWith(';')) ? '' : ';';
     return `${prefix}${rest}${separator}${googleBwe}${eol}`;
+  });
+
+  // Ensure fmtp exists for main video codecs
+  videoPayloads.forEach((pt) => {
+    const fmtpRegex = new RegExp(`a=fmtp:${pt}\\b`);
+    const rtpmapRegex = new RegExp(`(a=rtpmap:${pt}\\s+[^\r\n]+(?:\r?\n))`);
+    if (!fmtpRegex.test(result) && rtpmapRegex.test(result)) {
+      result = result.replace(rtpmapRegex, `$1a=fmtp:${pt} ${googleBwe}\r\n`);
+    }
   });
 
   return result;
@@ -139,23 +187,12 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
           console.warn('Falha ao configurar bitrate para novo participante', e);
         }
 
-        // Prioritize fast hardware gaming codecs (H.264, VP9, VP8)
+        // Prioritize modern multi-core GPU gaming codecs (VP9, AV1, VP8)
         try {
           const transceivers = pc.getTransceivers();
           const videoTransceiver = transceivers.find((t) => t.sender === sender);
-          if (videoTransceiver && typeof RTCRtpReceiver !== 'undefined' && RTCRtpReceiver.getCapabilities) {
-            const capabilities = RTCRtpReceiver.getCapabilities('video');
-            if (capabilities && capabilities.codecs) {
-              const fastCodecs = capabilities.codecs.filter((c) =>
-                ['video/h264', 'video/vp9', 'video/vp8'].includes(c.mimeType.toLowerCase())
-              );
-              const otherCodecs = capabilities.codecs.filter((c) =>
-                !['video/h264', 'video/vp9', 'video/vp8'].includes(c.mimeType.toLowerCase())
-              );
-              if (fastCodecs.length > 0) {
-                videoTransceiver.setCodecPreferences([...fastCodecs, ...otherCodecs]);
-              }
-            }
+          if (videoTransceiver) {
+            configureFastCodecs(videoTransceiver);
           }
         } catch (e) {
           console.warn('Falha ao configurar preferências de codecs de alta velocidade', e);

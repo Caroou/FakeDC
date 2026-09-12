@@ -26,9 +26,9 @@ export const QUALITY_PROFILES = {
     width: 1280,
     height: 720,
     frameRate: 60,
-    bitrate: 7500000, // 7.5 Mbps
-    startBitrateKbps: 6000,
-    minBitrateKbps: 4000,
+    bitrate: 6500000, // 6.5 Mbps (Discord Nitro 720p60)
+    startBitrateKbps: 5000,
+    minBitrateKbps: 3500,
     label: '720p 60 FPS'
   },
   '1080p30': {
@@ -36,9 +36,9 @@ export const QUALITY_PROFILES = {
     width: 1920,
     height: 1080,
     frameRate: 30,
-    bitrate: 8000000, // 8.0 Mbps
-    startBitrateKbps: 6000,
-    minBitrateKbps: 4500,
+    bitrate: 7000000, // 7.0 Mbps
+    startBitrateKbps: 5500,
+    minBitrateKbps: 4000,
     label: '1080p 30 FPS'
   },
   '1080p60': {
@@ -46,9 +46,9 @@ export const QUALITY_PROFILES = {
     width: 1920,
     height: 1080,
     frameRate: 60,
-    bitrate: 12000000, // 12.0 Mbps (crisp 60 FPS gaming motion)
-    startBitrateKbps: 9000,
-    minBitrateKbps: 6000,
+    bitrate: 10000000, // 10.0 Mbps (Discord Nitro 1080p60 benchmark)
+    startBitrateKbps: 7500,
+    minBitrateKbps: 5000,
     label: '1080p 60 FPS'
   }
 };

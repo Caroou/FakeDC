@@ -2,6 +2,7 @@ import { state } from '../state.js';
 import { getProfile, getScreenConstraints } from '../config.js';
 import { showToast } from '../ui/toast.js';
 import { addRemoteMedia } from '../ui/mediaRenderer.js';
+import { configureFastCodecs } from './peer.js';
 
 export async function initMedia() {
   const globalMutedCheckbox = document.getElementById('global-muted-checkbox');
@@ -143,23 +144,12 @@ export async function startScreenSharing() {
             console.warn('Falha ao configurar bitrate para a transmissão', e);
           }
 
-          // Prioritize fast hardware gaming codecs (H.264, VP9, VP8)
+          // Prioritize modern multi-core GPU gaming codecs (VP9, AV1, VP8)
           try {
             const transceivers = pc.getTransceivers();
             const videoTransceiver = transceivers.find(t => t.sender === sender);
-            if (videoTransceiver && typeof RTCRtpReceiver !== 'undefined' && RTCRtpReceiver.getCapabilities) {
-              const capabilities = RTCRtpReceiver.getCapabilities('video');
-              if (capabilities && capabilities.codecs) {
-                const fastCodecs = capabilities.codecs.filter(c =>
-                  ['video/h264', 'video/vp9', 'video/vp8'].includes(c.mimeType.toLowerCase())
-                );
-                const otherCodecs = capabilities.codecs.filter(c =>
-                  !['video/h264', 'video/vp9', 'video/vp8'].includes(c.mimeType.toLowerCase())
-                );
-                if (fastCodecs.length > 0) {
-                  videoTransceiver.setCodecPreferences([...fastCodecs, ...otherCodecs]);
-                }
-              }
+            if (videoTransceiver) {
+              configureFastCodecs(videoTransceiver);
             }
           } catch (e) {
             console.warn('Falha ao configurar preferências de codecs de alta velocidade', e);

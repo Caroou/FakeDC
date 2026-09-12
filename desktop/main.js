@@ -19,6 +19,8 @@ if (instanceArg) {
 app.commandLine.appendSwitch('ignore-gpu-blocklist');
 app.commandLine.appendSwitch('enable-gpu-rasterization');
 app.commandLine.appendSwitch('enable-accelerated-video-decode');
+app.commandLine.appendSwitch('enable-accelerated-video-encode');
+app.commandLine.appendSwitch('enable-gpu-memory-buffers');
 app.commandLine.appendSwitch('enable-accelerated-mjpeg-decode');
 
 // Disable background window throttling so games in foreground don't drop capture FPS
@@ -29,7 +31,7 @@ app.commandLine.appendSwitch('disable-background-timer-throttling');
 // Enable GPU hardware WebRTC encoding/decoding using stable DirectX DXGI capturer
 app.commandLine.appendSwitch(
   'enable-features',
-  'WebRtcHardwareVideoEncoding,WebRtcHardwareVideoDecoding,WebRtc-Bwe-Receiver-LimitWithHeadroom'
+  'WebRtcHardwareVideoEncoding,WebRtcHardwareVideoDecoding,WebRtc-Bwe-Receiver-LimitWithHeadroom,MediaFoundationVideoCapture'
 );
 app.commandLine.appendSwitch(
   'disable-features',
