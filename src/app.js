@@ -6,4 +6,5 @@ const app = express();
 // Serve static assets from the public directory
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+
 module.exports = app;

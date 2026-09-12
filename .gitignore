@@ -1,3 +1,7 @@
 node_modules/
 .env
 .DS_Store
+
+# Electron build artifacts
+dist/
+build/
