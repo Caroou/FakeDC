@@ -11,16 +11,6 @@ export const isDesktopApp = () =>
 
 // Quality profiles tuned for crisp clarity and smooth motion in fast-paced games
 export const QUALITY_PROFILES = {
-  '720p30': {
-    id: '720p30',
-    width: 1280,
-    height: 720,
-    frameRate: 30,
-    bitrate: 4500000, // 4.5 Mbps
-    startBitrateKbps: 3500,
-    minBitrateKbps: 2500,
-    label: '720p 30 FPS'
-  },
   '720p60': {
     id: '720p60',
     width: 1280,
@@ -30,16 +20,6 @@ export const QUALITY_PROFILES = {
     startBitrateKbps: 5000,
     minBitrateKbps: 3500,
     label: '720p 60 FPS'
-  },
-  '1080p30': {
-    id: '1080p30',
-    width: 1920,
-    height: 1080,
-    frameRate: 30,
-    bitrate: 7000000, // 7.0 Mbps
-    startBitrateKbps: 5500,
-    minBitrateKbps: 4000,
-    label: '1080p 30 FPS'
   },
   '1080p60': {
     id: '1080p60',

@@ -6,13 +6,36 @@
   "scripts": {
     "start": "node server.js",
     "desktop": "electron desktop/main.js",
-    "desktop:2": "electron desktop/main.js --instance=2"
+    "desktop:2": "electron desktop/main.js --instance=2",
+    "build": "electron-builder --win"
   },
   "dependencies": {
     "express": "^4.18.2",
     "socket.io": "^4.7.2"
   },
   "devDependencies": {
-    "electron": "^44.3.0"
+    "electron": "^44.3.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.fakedc.app",
+    "productName": "FakeDC",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "files": [
+      "desktop/**/*",
+      "public/**/*",
+      "src/**/*",
+      "package.json"
+    ]
   }
 }
