@@ -6,27 +6,67 @@ import { getAudioContext } from '../ui/speaking.js';
 export function enhanceSdp(sdp, profile) {
   const kbps = Math.floor(profile.bitrate / 1000);
   const bps = profile.bitrate;
-  const minKbps = profile.minBitrateKbps || Math.floor(kbps * 0.65);
+  const minKbps = profile.minBitrateKbps || Math.floor(kbps * 0.7);
 
-  let modified = sdp;
+  const lines = sdp.split(/\r?\n/);
+  let isVideoSection = false;
+  let videoPayloadTypes = [];
 
-  // 1. Force b=AS (kbps) and modern b=TIAS (bits per second) in video media section
-  if (!modified.includes(`b=AS:${kbps}`)) {
-    modified = modified.replace(/(m=video.*\r\n)/g, `$1b=AS:${kbps}\r\nb=TIAS:${bps}\r\n`);
+  // Pass 1: find m=video section and active payload types
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.startsWith('m=video')) {
+      isVideoSection = true;
+      const parts = line.split(' ');
+      videoPayloadTypes = parts.slice(3);
+    } else if (line.startsWith('m=')) {
+      isVideoSection = false;
+    }
   }
 
-  // 2. Inject x-google-min-bitrate, x-google-start-bitrate and x-google-max-bitrate into fmtp lines
-  // This explicitly overrides Google's 300kbps slow-start and prevents the encoder from dropping into blurry pixels
-  const fmtpParams = `x-google-min-bitrate=${minKbps};x-google-start-bitrate=${kbps};x-google-max-bitrate=${kbps}`;
+  // Pass 2: inject bitrate bounds and Google BWE minimums
+  const newLines = [];
+  isVideoSection = false;
 
-  modified = modified.replace(/a=fmtp:(\d+)(.*)\r\n/g, (match, pt, rest) => {
-    if (rest.includes('x-google-min-bitrate')) {
-      return match;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (line.startsWith('m=video')) {
+      isVideoSection = true;
+      newLines.push(line);
+      newLines.push(`b=AS:${kbps}`);
+      newLines.push(`b=TIAS:${bps}`);
+      continue;
+    } else if (line.startsWith('m=')) {
+      isVideoSection = false;
     }
-    return `a=fmtp:${pt}${rest};${fmtpParams}\r\n`;
-  });
 
-  return modified;
+    // Skip any existing bitrate lines
+    if (isVideoSection && (line.startsWith('b=AS:') || line.startsWith('b=TIAS:'))) {
+      continue;
+    }
+
+    // Inject min-bitrate and start-bitrate into video fmtp lines
+    if (isVideoSection && line.startsWith('a=fmtp:')) {
+      const match = line.match(/^a=fmtp:(\d+)(.*)$/);
+      if (match) {
+        const pt = match[1];
+        const rest = match[2];
+        if (videoPayloadTypes.includes(pt)) {
+          if (!rest.includes('x-google-min-bitrate')) {
+            newLines.push(
+              `a=fmtp:${pt}${rest};x-google-min-bitrate=${minKbps};x-google-start-bitrate=${kbps};x-google-max-bitrate=${kbps}`
+            );
+            continue;
+          }
+        }
+      }
+    }
+
+    newLines.push(line);
+  }
+
+  return newLines.join('\r\n') + '\r\n';
 }
 
 export function createPeerConnection(userId, peerUsername, isMuted = false) {
@@ -112,12 +152,12 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
 
   // Add local microphone if present
   if (state.localStream) {
-    state.localStream.getTracks().forEach(track => pc.addTrack(track, state.localStream));
+    state.localStream.getTracks().forEach((track) => pc.addTrack(track, state.localStream));
   }
 
   // Add active screen share if currently streaming
   if (state.screenStream) {
-    state.screenStream.getTracks().forEach(track => {
+    state.screenStream.getTracks().forEach((track) => {
       const sender = pc.addTrack(track, state.screenStream);
       if (track.kind === 'video') {
         try {
@@ -127,26 +167,30 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
           params.encodings[0].maxBitrate = profile.bitrate;
           params.encodings[0].scaleResolutionDownBy = 1.0;
           params.encodings[0].maxFramerate = profile.frameRate;
-          params.degradationPreference = 'balanced';
-          sender.setParameters(params).catch(e => console.warn(e));
+          params.degradationPreference = 'maintain-resolution';
+          sender.setParameters(params).catch((e) => console.warn(e));
         } catch (e) {
           console.warn('Falha ao configurar bitrate para novo participante', e);
         }
 
         try {
           const transceivers = pc.getTransceivers();
-          const videoTransceiver = transceivers.find(t => t.sender === sender);
+          const videoTransceiver = transceivers.find((t) => t.sender === sender);
           if (videoTransceiver && typeof RTCRtpReceiver !== 'undefined' && RTCRtpReceiver.getCapabilities) {
             const capabilities = RTCRtpReceiver.getCapabilities('video');
             if (capabilities && capabilities.codecs) {
-              const h264Codecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() === 'video/h264');
+              const h264Codecs = capabilities.codecs.filter((c) => c.mimeType.toLowerCase() === 'video/h264');
               // Sort High Profile ahead of Baseline to unlock 8x8 DCT transform clarity
-              const h264High = h264Codecs.filter(c => c.sdpFmtpLine?.includes('profile-level-id=6400'));
-              const h264Main = h264Codecs.filter(c => c.sdpFmtpLine?.includes('profile-level-id=4d00'));
-              const h264Rest = h264Codecs.filter(c => !c.sdpFmtpLine?.includes('profile-level-id=6400') && !c.sdpFmtpLine?.includes('profile-level-id=4d00'));
+              const h264High = h264Codecs.filter((c) => c.sdpFmtpLine?.includes('profile-level-id=6400'));
+              const h264Main = h264Codecs.filter((c) => c.sdpFmtpLine?.includes('profile-level-id=4d00'));
+              const h264Rest = h264Codecs.filter(
+                (c) =>
+                  !c.sdpFmtpLine?.includes('profile-level-id=6400') &&
+                  !c.sdpFmtpLine?.includes('profile-level-id=4d00')
+              );
               const sortedH264 = [...h264High, ...h264Main, ...h264Rest];
 
-              const otherCodecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() !== 'video/h264');
+              const otherCodecs = capabilities.codecs.filter((c) => c.mimeType.toLowerCase() !== 'video/h264');
               videoTransceiver.setCodecPreferences([...sortedH264, ...otherCodecs]);
             }
           }
@@ -171,7 +215,7 @@ export async function handleSignal({ from, signal, username: signalUsername, isM
 
   try {
     if (signal.type === 'offer' || signal.type === 'answer') {
-      const offerCollision = (signal.type === 'offer') && (peerObj.makingOffer || pc.signalingState !== 'stable');
+      const offerCollision = signal.type === 'offer' && (peerObj.makingOffer || pc.signalingState !== 'stable');
       peerObj.ignoreOffer = !isPolite && offerCollision;
       if (peerObj.ignoreOffer) return;
 

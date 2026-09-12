@@ -88,6 +88,10 @@ export async function startScreenSharing() {
     const screenVideoTrack = state.screenStream.getVideoTracks()[0];
     const screenAudioTrack = state.screenStream.getAudioTracks()[0];
 
+    if (screenVideoTrack) {
+      screenVideoTrack.contentHint = 'detail';
+    }
+
     for (const userId in state.peers) {
       const { pc } = state.peers[userId];
 
@@ -101,7 +105,7 @@ export async function startScreenSharing() {
           params.encodings[0].maxBitrate = profile.bitrate;
           params.encodings[0].scaleResolutionDownBy = 1.0;
           params.encodings[0].maxFramerate = profile.frameRate;
-          params.degradationPreference = 'balanced';
+          params.degradationPreference = 'maintain-resolution';
           sender.setParameters(params).catch(e => console.warn(e));
         } catch (e) {
           console.warn('Falha ao configurar bitrate para a transmissão', e);
