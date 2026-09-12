@@ -116,11 +116,13 @@ export async function startScreenSharing() {
         // Configure targeted profile bitrate
         try {
           const params = sender.getParameters();
-          if (!params.encodings) params.encodings = [{}];
-          params.encodings[0].maxBitrate = profile.bitrate;
-          if (profile.frameRate) {
-            params.encodings[0].maxFramerate = profile.frameRate;
+          if (!params.encodings || params.encodings.length === 0) {
+            params.encodings = [{}];
           }
+          params.encodings[0].maxBitrate = profile.bitrate;
+          params.encodings[0].maxFramerate = profile.frameRate;
+          params.encodings[0].scaleResolutionDownBy = 1.0;
+          params.degradationPreference = 'maintain-framerate';
           sender.setParameters(params).catch(e => console.warn(e));
         } catch (e) {
           console.warn('Falha ao configurar bitrate para a transmissão', e);

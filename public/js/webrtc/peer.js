@@ -3,12 +3,34 @@ import { ICE_SERVERS, getProfile } from '../config.js';
 import { addRemoteMedia, updateMediaVisibility } from '../ui/mediaRenderer.js';
 import { getAudioContext } from '../ui/speaking.js';
 
-export function applyBitrateToSdp(sdp, bitrateKbps) {
+export function applyBitrateToSdp(sdp, profile) {
   if (!sdp) return sdp;
-  if (sdp.includes('b=AS:')) {
-    return sdp.replace(/b=AS:\d+/g, `b=AS:${bitrateKbps}`);
+  const kbps = Math.floor(profile.bitrate / 1000);
+  const minKbps = profile.minBitrateKbps || Math.floor(kbps * 0.5);
+  const startKbps = profile.startBitrateKbps || Math.floor(kbps * 0.75);
+
+  let result = sdp;
+
+  // 1. Force b=AS cleanly under m=video
+  if (result.includes('b=AS:')) {
+    result = result.replace(/b=AS:\d+/g, `b=AS:${kbps}`);
+  } else {
+    result = result.replace(/(m=video[^\r\n]*(?:\r?\n))/g, (match, line) => `${line}b=AS:${kbps}\r\n`);
   }
-  return sdp.replace(/(m=video[^\r\n]*(?:\r?\n))/g, `$1b=AS:${bitrateKbps}\r\n`);
+
+  // 2. Inject Google BWE minimum, start, and max bitrates into video fmtp lines (eliminates slow-start pixelation)
+  const googleBwe = `x-google-min-bitrate=${minKbps};x-google-start-bitrate=${startKbps};x-google-max-bitrate=${kbps}`;
+
+  result = result.replace(/(a=fmtp:\d+)(?!.*apt=)(.*)(\r?\n)/g, (match, prefix, rest, eol) => {
+    if (rest.includes('x-google-min-bitrate')) {
+      return match;
+    }
+    const trimmed = rest.trim();
+    const separator = (trimmed === '' || trimmed.endsWith(';')) ? '' : ';';
+    return `${prefix}${rest}${separator}${googleBwe}${eol}`;
+  });
+
+  return result;
 }
 
 export function createPeerConnection(userId, peerUsername, isMuted = false) {
@@ -37,8 +59,7 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
       // SDP Munging to guarantee high bitrate and instant crisp quality
       if (state.screenStream) {
         const profile = getProfile(state.selectedQuality);
-        const kbps = Math.floor(profile.bitrate / 1000);
-        offer.sdp = applyBitrateToSdp(offer.sdp, kbps);
+        offer.sdp = applyBitrateToSdp(offer.sdp, profile);
       }
 
       await pc.setLocalDescription(offer);
@@ -106,11 +127,13 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
         try {
           const profile = getProfile(state.selectedQuality);
           const params = sender.getParameters();
-          if (!params.encodings) params.encodings = [{}];
-          params.encodings[0].maxBitrate = profile.bitrate;
-          if (profile.frameRate) {
-            params.encodings[0].maxFramerate = profile.frameRate;
+          if (!params.encodings || params.encodings.length === 0) {
+            params.encodings = [{}];
           }
+          params.encodings[0].maxBitrate = profile.bitrate;
+          params.encodings[0].maxFramerate = profile.frameRate;
+          params.encodings[0].scaleResolutionDownBy = 1.0;
+          params.degradationPreference = 'maintain-framerate';
           sender.setParameters(params).catch((e) => console.warn(e));
         } catch (e) {
           console.warn('Falha ao configurar bitrate para novo participante', e);
@@ -158,10 +181,9 @@ export async function handleSignal({ from, signal, username: signalUsername, isM
 
       if (signal.type === 'offer') {
         let answer = await pc.createAnswer();
-        if (state.screenStream) {
+        if (state.screenStream || answer.sdp.includes('m=video')) {
           const profile = getProfile(state.selectedQuality);
-          const kbps = Math.floor(profile.bitrate / 1000);
-          answer.sdp = applyBitrateToSdp(answer.sdp, kbps);
+          answer.sdp = applyBitrateToSdp(answer.sdp, profile);
         }
         await pc.setLocalDescription(answer);
         state.socket.emit('signal', { to: from, signal: pc.localDescription });

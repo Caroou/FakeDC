@@ -47,6 +47,28 @@ export function initScreenPicker() {
     btn.addEventListener('click', () => {
       state.selectedQuality = btn.getAttribute('data-quality');
       updateQualityUI();
+
+      // If already streaming, dynamically update bitrate and framerate on all peers
+      if (state.screenStream) {
+        const profile = getProfile(state.selectedQuality);
+        for (const userId in state.peers) {
+          const { pc } = state.peers[userId];
+          const senders = pc.getSenders();
+          const videoSender = senders.find((s) => s.track && s.track.kind === 'video');
+          if (videoSender) {
+            try {
+              const params = videoSender.getParameters();
+              if (params.encodings && params.encodings.length > 0) {
+                params.encodings[0].maxBitrate = profile.bitrate;
+                params.encodings[0].maxFramerate = profile.frameRate;
+                videoSender.setParameters(params).catch((e) => console.warn(e));
+              }
+            } catch (e) {
+              console.warn('Falha ao atualizar parâmetros de streaming ao vivo', e);
+            }
+          }
+        }
+      }
     });
   });
 
