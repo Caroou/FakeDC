@@ -9,5 +9,6 @@ export const state = {
   currentTab: 'join',
   chatCryptoKey: null,
   isConnecting: false,
+  selectedQuality: '1080p60',
   peers: {} // userId -> { pc, isPolite, makingOffer, ignoreOffer, username, isMuted, analyser }
 };

@@ -240,8 +240,22 @@
       </div>
 
       <!-- Sources Grid -->
-      <div id="screen-picker-grid" class="flex-1 overflow-y-auto p-6 grid grid-cols-2 gap-4 max-h-[50vh]">
+      <div id="screen-picker-grid" class="flex-1 overflow-y-auto p-6 grid grid-cols-2 gap-4 max-h-[42vh]">
         <!-- Cards dynamically injected -->
+      </div>
+
+      <!-- Quality Options Selector -->
+      <div class="px-6 py-3 border-t border-white/5 bg-discord-tertiary/30">
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-xs font-bold text-zinc-400 uppercase tracking-wide">Qualidade da Transmissão</label>
+          <span id="selected-quality-badge" class="text-[11px] font-semibold text-discord-blurple bg-discord-blurple/10 px-2 py-0.5 rounded-full">1080p 60 FPS</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <button type="button" data-quality="720p30" class="quality-btn py-2 px-3 rounded-xl text-xs font-semibold border transition-all text-zinc-400 border-zinc-700/60 hover:text-white hover:border-zinc-500 text-center">720p 30 FPS</button>
+          <button type="button" data-quality="720p60" class="quality-btn py-2 px-3 rounded-xl text-xs font-semibold border transition-all text-zinc-400 border-zinc-700/60 hover:text-white hover:border-zinc-500 text-center">720p 60 FPS</button>
+          <button type="button" data-quality="1080p30" class="quality-btn py-2 px-3 rounded-xl text-xs font-semibold border transition-all text-zinc-400 border-zinc-700/60 hover:text-white hover:border-zinc-500 text-center">1080p 30 FPS</button>
+          <button type="button" data-quality="1080p60" class="quality-btn py-2 px-3 rounded-xl text-xs font-semibold border transition-all text-white bg-discord-blurple/20 border-discord-blurple shadow-sm text-center">1080p 60 FPS</button>
+        </div>
       </div>
 
       <!-- Modal Footer -->

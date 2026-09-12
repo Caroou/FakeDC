@@ -1,11 +1,12 @@
-// Screen & Window selection modal for FakeDC Desktop
+import { state } from '../state.js';
+import { getProfile } from '../config.js';
+import { startScreenSharing } from '../webrtc/media.js';
+
 let currentSources = [];
 let selectedSourceId = null;
 let currentTab = 'screens'; // 'screens' | 'windows'
 
 export function initScreenPicker() {
-  if (!window.desktopApp?.onOpenScreenPicker) return;
-
   const modal = document.getElementById('screen-picker-modal');
   const closeBtn = document.getElementById('screen-picker-close-btn');
   const cancelBtn = document.getElementById('screen-picker-cancel-btn');
@@ -13,8 +14,43 @@ export function initScreenPicker() {
   const tabScreens = document.getElementById('picker-tab-screens');
   const tabWindows = document.getElementById('picker-tab-windows');
   const grid = document.getElementById('screen-picker-grid');
+  const qualityButtons = document.querySelectorAll('.quality-btn');
+  const qualityBadge = document.getElementById('selected-quality-badge');
 
-  if (!modal || !closeBtn || !cancelBtn || !confirmBtn || !tabScreens || !tabWindows || !grid) return;
+  if (!modal || !closeBtn || !cancelBtn || !confirmBtn) return;
+
+  function updateQualityUI() {
+    qualityButtons.forEach((btn) => {
+      const q = btn.getAttribute('data-quality');
+      if (q === state.selectedQuality) {
+        btn.className =
+          'quality-btn py-2 px-3 rounded-xl text-xs font-semibold border transition-all text-white bg-discord-blurple/20 border-discord-blurple shadow-sm text-center';
+      } else {
+        btn.className =
+          'quality-btn py-2 px-3 rounded-xl text-xs font-semibold border transition-all text-zinc-400 border-zinc-700/60 hover:text-white hover:border-zinc-500 text-center';
+      }
+    });
+
+    const profile = getProfile(state.selectedQuality);
+    if (qualityBadge) qualityBadge.innerText = profile.label;
+
+    const screenShareBtn = document.getElementById('screen-share-btn');
+    if (screenShareBtn && !state.screenStream) {
+      screenShareBtn.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+        ${profile.label}
+      `;
+    }
+  }
+
+  qualityButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.selectedQuality = btn.getAttribute('data-quality');
+      updateQualityUI();
+    });
+  });
+
+  updateQualityUI();
 
   function closeModal(cancelled = true) {
     modal.classList.add('hidden-section');
@@ -24,7 +60,28 @@ export function initScreenPicker() {
   }
 
   function renderSources() {
+    if (!grid) return;
     grid.innerHTML = '';
+
+    const isDesktop = Boolean(window.desktopApp?.isDesktop);
+
+    if (!isDesktop) {
+      // In standard web browser, explain that the browser will open the permission picker
+      grid.innerHTML = `
+        <div class="col-span-2 py-8 px-4 text-center text-zinc-300 text-sm flex flex-col items-center justify-center gap-3">
+          <div class="w-12 h-12 rounded-full bg-discord-blurple/10 flex items-center justify-center text-discord-blurple">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+          </div>
+          <p class="font-semibold text-white">Escolha o Perfil de Qualidade</p>
+          <p class="text-xs text-zinc-400 max-w-sm">
+            Selecione a resolução e taxa de quadros desejada abaixo. Ao clicar em Compartilhar, a caixa de permissão do navegador se abrirá.
+          </p>
+        </div>
+      `;
+      confirmBtn.disabled = false;
+      return;
+    }
+
     const filtered = currentSources.filter((s) =>
       currentTab === 'screens' ? s.isScreen : !s.isScreen
     );
@@ -39,7 +96,6 @@ export function initScreenPicker() {
       return;
     }
 
-    // Default selection to first item if current selection not in filtered list
     if (!filtered.some((s) => s.id === selectedSourceId)) {
       selectedSourceId = filtered[0].id;
     }
@@ -79,38 +135,80 @@ export function initScreenPicker() {
 
   function setTab(tab) {
     currentTab = tab;
-    if (tab === 'screens') {
-      tabScreens.className = 'pb-3 text-sm font-semibold border-b-2 border-discord-blurple text-white transition-colors';
-      tabWindows.className = 'pb-3 text-sm font-semibold border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors';
-    } else {
-      tabWindows.className = 'pb-3 text-sm font-semibold border-b-2 border-discord-blurple text-white transition-colors';
-      tabScreens.className = 'pb-3 text-sm font-semibold border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors';
+    if (tabScreens && tabWindows) {
+      if (tab === 'screens') {
+        tabScreens.className =
+          'pb-3 text-sm font-semibold border-b-2 border-discord-blurple text-white transition-colors';
+        tabWindows.className =
+          'pb-3 text-sm font-semibold border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors';
+      } else {
+        tabWindows.className =
+          'pb-3 text-sm font-semibold border-b-2 border-discord-blurple text-white transition-colors';
+        tabScreens.className =
+          'pb-3 text-sm font-semibold border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors';
+      }
     }
     renderSources();
   }
 
-  tabScreens.addEventListener('click', () => setTab('screens'));
-  tabWindows.addEventListener('click', () => setTab('windows'));
+  if (tabScreens) tabScreens.addEventListener('click', () => setTab('screens'));
+  if (tabWindows) tabWindows.addEventListener('click', () => setTab('windows'));
 
   closeBtn.addEventListener('click', () => closeModal(true));
   cancelBtn.addEventListener('click', () => closeModal(true));
 
   confirmBtn.addEventListener('click', () => {
-    if (selectedSourceId && window.desktopApp?.selectSource) {
-      window.desktopApp.selectSource(selectedSourceId);
+    const isDesktop = Boolean(window.desktopApp?.isDesktop);
+
+    if (isDesktop) {
+      if (selectedSourceId && window.desktopApp?.selectSource) {
+        window.desktopApp.selectSource(selectedSourceId);
+        closeModal(false);
+      }
+    } else {
+      // In web, close modal and start browser screen share with selected quality
       closeModal(false);
+      startScreenSharing();
     }
   });
 
-  // Listen for Electron trigger
-  window.desktopApp.onOpenScreenPicker(async () => {
-    try {
-      currentSources = await window.desktopApp.getSources();
-      modal.classList.remove('hidden-section');
-      setTab('screens');
-    } catch (e) {
-      console.error('Erro ao abrir seletor de telas:', e);
-      closeModal(true);
-    }
-  });
+  // Desktop Electron event
+  if (window.desktopApp?.onOpenScreenPicker) {
+    window.desktopApp.onOpenScreenPicker(async () => {
+      try {
+        currentSources = await window.desktopApp.getSources();
+        modal.classList.remove('hidden-section');
+        setTab('screens');
+      } catch (e) {
+        console.error('Erro ao abrir seletor de telas:', e);
+        closeModal(true);
+      }
+    });
+  }
+}
+
+export function openWebQualityModal() {
+  const modal = document.getElementById('screen-picker-modal');
+  const tabScreens = document.getElementById('picker-tab-screens');
+  const tabWindows = document.getElementById('picker-tab-windows');
+  const grid = document.getElementById('screen-picker-grid');
+
+  if (!modal || !grid) return;
+
+  if (tabScreens) tabScreens.style.display = 'none';
+  if (tabWindows) tabWindows.style.display = 'none';
+
+  grid.innerHTML = `
+    <div class="col-span-2 py-8 px-4 text-center text-zinc-300 text-sm flex flex-col items-center justify-center gap-3">
+      <div class="w-12 h-12 rounded-full bg-discord-blurple/10 flex items-center justify-center text-discord-blurple">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+      </div>
+      <p class="font-semibold text-white">Escolha o Perfil de Qualidade</p>
+      <p class="text-xs text-zinc-400 max-w-sm">
+        Selecione a resolução e taxa de quadros desejada abaixo e clique em <strong>Compartilhar</strong>.
+      </p>
+    </div>
+  `;
+
+  modal.classList.remove('hidden-section');
 }

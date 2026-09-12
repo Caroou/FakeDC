@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { SCREEN_SHARE_CONSTRAINTS, getTargetVideoBitrate } from '../config.js';
+import { getProfile, getScreenConstraints } from '../config.js';
 import { showToast } from '../ui/toast.js';
 import { addRemoteMedia } from '../ui/mediaRenderer.js';
 
@@ -73,9 +73,12 @@ export async function toggleScreenShare() {
 
 export async function startScreenSharing() {
   const screenShareBtn = document.getElementById('screen-share-btn');
+  const profile = getProfile(state.selectedQuality);
 
   try {
-    state.screenStream = await navigator.mediaDevices.getDisplayMedia(SCREEN_SHARE_CONSTRAINTS);
+    state.screenStream = await navigator.mediaDevices.getDisplayMedia(
+      getScreenConstraints(state.selectedQuality)
+    );
 
     if (screenShareBtn) {
       screenShareBtn.classList.remove('text-zinc-300', 'hover:bg-zinc-600');
@@ -85,20 +88,25 @@ export async function startScreenSharing() {
     const screenVideoTrack = state.screenStream.getVideoTracks()[0];
     const screenAudioTrack = state.screenStream.getAudioTracks()[0];
 
+    // Hint browser to prioritize real-time motion and avoid jitter buffer delay
+    if (screenVideoTrack) {
+      screenVideoTrack.contentHint = 'motion';
+    }
+
     for (const userId in state.peers) {
       const { pc } = state.peers[userId];
 
       if (screenVideoTrack) {
         const sender = pc.addTrack(screenVideoTrack, state.screenStream);
 
-        // Force maximum bitrate (18 Mbps in Desktop, 8 Mbps in Web)
+        // Configure targeted profile bitrate (prevents network congestion / lag)
         try {
           const params = sender.getParameters();
           if (!params.encodings) params.encodings = [{}];
-          params.encodings[0].maxBitrate = getTargetVideoBitrate();
+          params.encodings[0].maxBitrate = profile.bitrate;
           sender.setParameters(params).catch(e => console.warn(e));
         } catch (e) {
-          console.warn('Failed to prepare parameters', e);
+          console.warn('Falha ao configurar bitrate para a transmissão', e);
         }
 
         // Prioritize hardware H.264 codec

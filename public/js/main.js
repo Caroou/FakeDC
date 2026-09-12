@@ -5,10 +5,10 @@ import { initTabs } from './ui/tabs.js';
 import { initIdleDetection } from './ui/idle.js';
 import { initSpeakingDetector } from './ui/speaking.js';
 import { addRemoteMedia } from './ui/mediaRenderer.js';
-import { initMedia, toggleMic, toggleScreenShare } from './webrtc/media.js';
+import { initMedia, toggleMic, startScreenSharing, stopScreenSharing } from './webrtc/media.js';
 import { initChat } from './chat.js';
 import { initSocketClient } from './socket.js';
-import { initScreenPicker } from './ui/screenPicker.js';
+import { initScreenPicker, openWebQualityModal } from './ui/screenPicker.js';
 
 async function proceedToRoom() {
   const loginSection = document.getElementById('login-section');
@@ -125,7 +125,17 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (screenShareBtn) {
-    screenShareBtn.addEventListener('click', toggleScreenShare);
+    screenShareBtn.addEventListener('click', () => {
+      if (!state.screenStream) {
+        if (!window.desktopApp?.isDesktop) {
+          openWebQualityModal();
+        } else {
+          startScreenSharing();
+        }
+      } else {
+        stopScreenSharing();
+      }
+    });
   }
 
   if (leaveRoomBtn) {

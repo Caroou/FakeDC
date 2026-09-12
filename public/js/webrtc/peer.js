@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { ICE_SERVERS, getTargetVideoBitrate, getTargetSdpBitrate } from '../config.js';
+import { ICE_SERVERS, getProfile } from '../config.js';
 import { addRemoteMedia, updateMediaVisibility } from '../ui/mediaRenderer.js';
 import { getAudioContext } from '../ui/speaking.js';
 
@@ -26,11 +26,11 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
       peerObj.makingOffer = true;
       let offer = await pc.createOffer();
 
-      // SDP Munging to force target bitrate and eliminate quality ramp-up blur
+      // SDP Munging to force profile bitrate and eliminate quality ramp-up blur
       if (state.screenStream) {
-        const sdpBitrate = getTargetSdpBitrate();
-        if (!offer.sdp.includes(sdpBitrate)) {
-          offer.sdp = offer.sdp.replace(/(m=video.*\r\n)/g, `$1${sdpBitrate}\r\n`);
+        const profile = getProfile(state.selectedQuality);
+        if (!offer.sdp.includes(profile.sdpBitrate)) {
+          offer.sdp = offer.sdp.replace(/(m=video.*\r\n)/g, `$1${profile.sdpBitrate}\r\n`);
         }
       }
 
@@ -49,7 +49,12 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
     }
   };
 
-  pc.ontrack = ({ track, streams }) => {
+  pc.ontrack = ({ track, streams, receiver }) => {
+    // Low-latency playout delay optimization (prevents video frame buffer delay)
+    if (receiver && 'playoutDelayHint' in receiver) {
+      receiver.playoutDelayHint = 0;
+    }
+
     const stream = streams[0];
     if (stream) {
       const isScreenShare = stream.getVideoTracks().length > 0;
@@ -92,9 +97,10 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
       const sender = pc.addTrack(track, state.screenStream);
       if (track.kind === 'video') {
         try {
+          const profile = getProfile(state.selectedQuality);
           const params = sender.getParameters();
           if (!params.encodings) params.encodings = [{}];
-          params.encodings[0].maxBitrate = getTargetVideoBitrate();
+          params.encodings[0].maxBitrate = profile.bitrate;
           sender.setParameters(params).catch(e => console.warn(e));
         } catch (e) {
           console.warn('Falha ao configurar bitrate para novo participante', e);
@@ -143,9 +149,9 @@ export async function handleSignal({ from, signal, username: signalUsername, isM
       if (signal.type === 'offer') {
         let answer = await pc.createAnswer();
         if (state.screenStream) {
-          const sdpBitrate = getTargetSdpBitrate();
-          if (!answer.sdp.includes(sdpBitrate)) {
-            answer.sdp = answer.sdp.replace(/(m=video.*\r\n)/g, `$1${sdpBitrate}\r\n`);
+          const profile = getProfile(state.selectedQuality);
+          if (!answer.sdp.includes(profile.sdpBitrate)) {
+            answer.sdp = answer.sdp.replace(/(m=video.*\r\n)/g, `$1${profile.sdpBitrate}\r\n`);
           }
         }
         await pc.setLocalDescription(answer);
