@@ -58,7 +58,7 @@
   <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
 
   <!-- ================= LOBBY ================= -->
-  <div id="login-section" class="flex-1 flex items-center justify-center relative min-h-screen px-4">
+  <div id="login-section" class="flex-1 flex flex-col items-center justify-center relative min-h-screen px-4">
     <!-- Subtle Background Glow -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
       <div class="w-[500px] h-[500px] bg-discord-blurple/20 rounded-full blur-[100px]"></div>
@@ -148,19 +148,19 @@
         </label>
       </div>
 
-      <button id="action-btn" class="w-full mt-6 bg-discord-blurple hover:bg-discord-blurpleHover text-white font-semibold py-3 rounded-xl transition-all duration-200 active:scale-[0.98] shadow-lg shadow-discord-blurple/20">
+      <button id="action-btn" class="w-full mt-5 bg-discord-blurple hover:bg-discord-blurpleHover text-white font-semibold py-3 rounded-xl transition-all duration-200 active:scale-[0.98] shadow-lg shadow-discord-blurple/20">
         Conectar à Sala
       </button>
-
-      <!-- App Download Button (Web Only) -->
-      <div id="download-app-container" class="mt-6 border-t border-white/5 pt-6 flex justify-center">
-        <a href="/download" class="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors group">
-          <svg class="w-5 h-5 text-discord-blurple group-hover:text-indigo-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-          <span class="text-sm font-medium">Baixar Aplicativo Desktop</span>
-        </a>
-      </div>
-
     </div>
+
+    <!-- App Download Button (Web Only) -->
+    <div id="download-app-container" class="mt-6 z-10">
+      <a href="/download" class="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors group">
+        <svg class="w-5 h-5 text-discord-blurple group-hover:text-indigo-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        <span class="text-sm font-medium">Baixar Aplicativo Desktop</span>
+      </a>
+    </div>
+
   </div>
 
   <!-- ================= APP SECTION ================= -->
