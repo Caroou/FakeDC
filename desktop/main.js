@@ -152,17 +152,45 @@ ipcMain.handle('cancel-source', () => {
   }
 });
 
+function getWindowFromRequest(request) {
+  if (request && request.frame && request.frame.webContents) {
+    try {
+      const win = BrowserWindow.fromWebContents(request.frame.webContents);
+      if (win && !win.isDestroyed()) return win;
+    } catch (_) {}
+  }
+  if (request && request.frame && typeof BrowserWindow.fromWebFrameMain === 'function') {
+    try {
+      const win = BrowserWindow.fromWebFrameMain(request.frame);
+      if (win && !win.isDestroyed()) return win;
+    } catch (_) {}
+  }
+  const focused = BrowserWindow.getFocusedWindow();
+  if (focused && !focused.isDestroyed()) return focused;
+  for (const win of openWindows) {
+    if (win && !win.isDestroyed()) return win;
+  }
+  return null;
+}
+
 app.whenReady().then(async () => {
   await startEmbeddedServer();
 
-  // Handle display media requests (screen / window capture) for all windows
+  // Handle display media requests (screen / window capture) for all windows safely
   session.defaultSession.setDisplayMediaRequestHandler(async (request, callback) => {
     pendingMediaCallback = callback;
-    const targetWin = BrowserWindow.fromWebContents(request.frame) || Array.from(openWindows)[0];
-    if (targetWin && !targetWin.isDestroyed()) {
-      targetWin.webContents.send('open-screen-picker');
-    } else {
+    try {
+      const targetWin = getWindowFromRequest(request);
+      if (targetWin && !targetWin.isDestroyed()) {
+        targetWin.webContents.send('open-screen-picker');
+      } else {
+        callback({});
+        pendingMediaCallback = null;
+      }
+    } catch (err) {
+      console.error('[FakeDC Desktop] Erro ao iniciar compartilhamento de tela:', err);
       callback({});
+      pendingMediaCallback = null;
     }
   });
 
