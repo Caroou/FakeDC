@@ -2,7 +2,7 @@
   "name": "fakedc",
   "version": "1.0.0",
   "description": "Uma aplicação WebRTC estilo Discord para chamadas de voz e tela P2P",
-  "main": "server.js",
+  "main": "desktop/main.js",
   "scripts": {
     "start": "node server.js",
     "desktop": "electron desktop/main.js",
@@ -30,12 +30,6 @@
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true
-    },
-    "files": [
-      "desktop/**/*",
-      "public/**/*",
-      "src/**/*",
-      "package.json"
-    ]
+    }
   }
 }
