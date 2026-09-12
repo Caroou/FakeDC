@@ -106,6 +106,10 @@ export async function startScreenSharing() {
     const screenVideoTrack = state.screenStream.getVideoTracks()[0];
     const screenAudioTrack = state.screenStream.getAudioTracks()[0];
 
+    if (screenVideoTrack) {
+      screenVideoTrack.contentHint = 'motion';
+    }
+
     for (const userId in state.peers) {
       const { pc } = state.peers[userId];
 

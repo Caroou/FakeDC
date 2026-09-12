@@ -54,6 +54,7 @@ export function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially =
     videoEl.autoplay = true;
     videoEl.playsInline = true;
     videoEl.className = 'w-full h-full object-contain bg-black';
+    videoEl.style.transform = 'translateZ(0)';
 
     if (mediaId.startsWith('local-')) {
       videoEl.muted = true;

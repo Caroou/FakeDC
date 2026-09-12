@@ -77,11 +77,7 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
     }
   };
 
-  pc.ontrack = ({ track, streams, receiver }) => {
-    // Low-latency playout delay optimization (prevents frame lag)
-    if (receiver && 'playoutDelayHint' in receiver) {
-      receiver.playoutDelayHint = 0;
-    }
+  pc.ontrack = ({ track, streams }) => {
 
     const stream = streams[0];
     if (stream) {

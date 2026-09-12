@@ -14,7 +14,7 @@ app.commandLine.appendSwitch('enable-zero-copy');
 app.commandLine.appendSwitch('force-high-performance-gpu');
 app.commandLine.appendSwitch(
   'enable-features',
-  'WebRtc-H264WithOpenH264FFmpeg,WebRtcHardwareVideoEncoding,WebRtcHardwareVideoDecoding,WebRtc-Bwe-Receiver-LimitWithHeadroom'
+  'WebRtcHardwareVideoEncoding,WebRtcHardwareVideoDecoding,WebRtc-Bwe-Receiver-LimitWithHeadroom'
 );
 app.commandLine.appendSwitch('disable-features', 'WebRtcHideLocalIpsWithMdns');
 app.commandLine.appendSwitch('webrtc-max-cpu-consumption-percentage', '100');
