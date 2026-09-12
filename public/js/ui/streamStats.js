@@ -133,7 +133,7 @@ function updateStatsBadge(mediaId, fps, bitrateMbps, width, height, codec, limit
     badge = document.createElement('div');
     badge.id = `stats-badge-${mediaId}`;
     badge.className =
-      'absolute top-3 left-3 bg-black/85 backdrop-blur-md font-mono text-[11px] px-2.5 py-1 rounded-lg z-30 shadow-lg border border-white/15 flex items-center gap-2 pointer-events-none select-none';
+      'stats-badge absolute top-3 left-3 bg-black/85 backdrop-blur-md font-mono text-[11px] px-2.5 py-1 rounded-lg z-30 shadow-lg border border-white/15 flex items-center gap-2 pointer-events-none select-none';
     container.appendChild(badge);
   }
 

@@ -147,4 +147,24 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  const toggleStatsBtn = document.getElementById('toggle-stats-btn');
+  if (toggleStatsBtn) {
+    toggleStatsBtn.addEventListener('click', () => {
+      document.body.classList.toggle('hide-stats');
+      if (document.body.classList.contains('hide-stats')) {
+        toggleStatsBtn.classList.remove('text-white', 'bg-white/10');
+        toggleStatsBtn.classList.add('text-zinc-400');
+      } else {
+        toggleStatsBtn.classList.add('text-white', 'bg-white/10');
+        toggleStatsBtn.classList.remove('text-zinc-400');
+      }
+    });
+  }
+
+  // Ocultar botão de download se estiver rodando no Electron
+  if (window.desktopApp?.isDesktop) {
+    const downloadContainer = document.getElementById('download-app-container');
+    if (downloadContainer) downloadContainer.style.display = 'none';
+  }
 });

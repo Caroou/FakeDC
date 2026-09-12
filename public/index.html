@@ -47,9 +47,12 @@
     
     /* Hide unactive sections smoothly */
     .hidden-section { display: none !important; }
+    
+    /* Toggle Stats */
+    .hide-stats .stats-badge { display: none !important; }
   </style>
 </head>
-<body class="bg-discord-main text-zinc-300 font-sans h-[100dvh] w-screen overflow-hidden flex flex-col selection:bg-discord-blurple selection:text-white">
+<body class="bg-discord-main text-zinc-300 font-sans h-[100dvh] w-screen overflow-hidden flex flex-col selection:bg-discord-blurple selection:text-white hide-stats">
 
   <!-- ================= TOAST CONTAINER ================= -->
   <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
@@ -149,6 +152,14 @@
         Conectar à Sala
       </button>
     </div>
+
+    <!-- App Download Button (Web Only) -->
+    <div id="download-app-container" class="absolute bottom-8 left-1/2 -translate-x-1/2">
+      <a href="/download" class="flex items-center gap-3 bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-300 hover:text-white px-5 py-2.5 rounded-full border border-zinc-700 transition-all shadow-lg backdrop-blur-sm group">
+        <svg class="w-5 h-5 text-discord-blurple group-hover:text-indigo-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        <span class="text-sm font-semibold">Baixar Aplicativo Desktop (60 FPS Nitro)</span>
+      </a>
+    </div>
   </div>
 
   <!-- ================= APP SECTION ================= -->
@@ -163,9 +174,14 @@
           <svg class="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
           <h2 id="room-name-display" class="font-bold text-white text-lg">Sala</h2>
         </div>
-        <div id="connection-status-badge" class="flex items-center gap-2 bg-discord-tertiary px-3 py-1.5 rounded-full border border-white/5">
-          <div id="connection-status-dot" class="w-2 h-2 rounded-full bg-discord-green animate-pulse"></div>
-          <span id="connection-status-text" class="text-xs font-semibold text-discord-green">Conectado</span>
+        <div class="flex items-center gap-3">
+          <button id="toggle-stats-btn" title="Mostrar/Ocultar Estatísticas (FPS, Bitrate)" class="text-zinc-400 hover:text-white transition-colors flex items-center justify-center p-1.5 rounded-lg hover:bg-white/5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+          </button>
+          <div id="connection-status-badge" class="flex items-center gap-2 bg-discord-tertiary px-3 py-1.5 rounded-full border border-white/5">
+            <div id="connection-status-dot" class="w-2 h-2 rounded-full bg-discord-green animate-pulse"></div>
+            <span id="connection-status-text" class="text-xs font-semibold text-discord-green">Conectado</span>
+          </div>
         </div>
       </header>
 
