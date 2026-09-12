@@ -24,6 +24,8 @@ app.commandLine.appendSwitch('enable-accelerated-video-decode');
 app.commandLine.appendSwitch('enable-accelerated-video-encode');
 app.commandLine.appendSwitch('enable-gpu-memory-buffers');
 app.commandLine.appendSwitch('enable-accelerated-mjpeg-decode');
+app.commandLine.appendSwitch('disable-frame-rate-limit');
+app.commandLine.appendSwitch('disable-gpu-vsync');
 
 // Disable background window throttling so games in foreground don't drop capture FPS
 app.commandLine.appendSwitch('disable-renderer-backgrounding');

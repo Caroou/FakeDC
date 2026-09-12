@@ -4,7 +4,7 @@ import { startScreenSharing } from '../webrtc/media.js';
 
 let currentSources = [];
 let selectedSourceId = null;
-let currentTab = 'screens'; // 'screens' | 'windows'
+let currentTab = 'windows'; // 'windows' (prioritized for 60fps) | 'screens'
 
 export function initScreenPicker() {
   const modal = document.getElementById('screen-picker-modal');
@@ -166,10 +166,10 @@ export function initScreenPicker() {
         tabScreens.className =
           'pb-3 text-sm font-semibold border-b-2 border-discord-blurple text-white transition-colors';
         tabWindows.className =
-          'pb-3 text-sm font-semibold border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors';
+          'pb-3 text-sm font-semibold border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors flex items-center gap-2';
       } else {
         tabWindows.className =
-          'pb-3 text-sm font-semibold border-b-2 border-discord-blurple text-white transition-colors';
+          'pb-3 text-sm font-semibold border-b-2 border-discord-blurple text-white transition-colors flex items-center gap-2';
         tabScreens.className =
           'pb-3 text-sm font-semibold border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors';
       }
@@ -206,7 +206,7 @@ export function initScreenPicker() {
         if (tabWindows) tabWindows.style.display = '';
         currentSources = await window.desktopApp.getSources();
         modal.classList.remove('hidden-section');
-        setTab('screens');
+        setTab('windows');
       } catch (e) {
         console.error('Erro ao abrir seletor de telas:', e);
         closeModal(true);
