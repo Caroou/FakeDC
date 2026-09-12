@@ -18,21 +18,18 @@ if (instanceArg) {
 // === Performance & GPU Flags for High-Motion 60 FPS Game Streaming ===
 app.commandLine.appendSwitch('ignore-gpu-blocklist');
 app.commandLine.appendSwitch('enable-gpu-rasterization');
-app.commandLine.appendSwitch('enable-zero-copy');
-app.commandLine.appendSwitch('force-high-performance-gpu');
 app.commandLine.appendSwitch('enable-accelerated-video-decode');
 app.commandLine.appendSwitch('enable-accelerated-mjpeg-decode');
-app.commandLine.appendSwitch('webrtc-max-cpu-consumption-percentage', '100');
 
 // Disable background window throttling so games in foreground don't drop capture FPS
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 app.commandLine.appendSwitch('disable-background-timer-throttling');
 
-// Enable modern Windows Graphics Capture (WGC) and GPU hardware WebRTC encoding
+// Enable GPU hardware WebRTC encoding/decoding using stable DirectX DXGI capturer
 app.commandLine.appendSwitch(
   'enable-features',
-  'AllowWgcScreenCapturer,AllowWgcWindowCapturer,WebRtcHardwareVideoEncoding,WebRtcHardwareVideoDecoding,WebRtc-Bwe-Receiver-LimitWithHeadroom'
+  'WebRtcHardwareVideoEncoding,WebRtcHardwareVideoDecoding,WebRtc-Bwe-Receiver-LimitWithHeadroom'
 );
 app.commandLine.appendSwitch(
   'disable-features',
@@ -49,11 +46,6 @@ function startEmbeddedServer() {
     const io = new Server(embeddedServer);
     initSocketServer(io);
 
-    embeddedServer.listen(config.PORT, () => {
-      console.log(`[FakeDC Desktop] Servidor integrado ativo na porta ${config.PORT}`);
-      resolve();
-    });
-
     embeddedServer.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
         console.log(`[FakeDC Desktop] Servidor externo já detectado na porta ${config.PORT}`);
@@ -62,6 +54,11 @@ function startEmbeddedServer() {
         console.error('[FakeDC Desktop] Erro no servidor:', err);
         resolve();
       }
+    });
+
+    embeddedServer.listen(config.PORT, () => {
+      console.log(`[FakeDC Desktop] Servidor integrado ativo na porta ${config.PORT}`);
+      resolve();
     });
   });
 }
@@ -181,5 +178,13 @@ app.whenReady().then(async () => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+app.on('before-quit', () => {
+  if (embeddedServer) {
+    try {
+      embeddedServer.close();
+    } catch (_) {}
   }
 });
