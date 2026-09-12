@@ -12,12 +12,23 @@ app.commandLine.appendSwitch('ignore-gpu-blocklist');
 app.commandLine.appendSwitch('enable-gpu-rasterization');
 app.commandLine.appendSwitch('enable-zero-copy');
 app.commandLine.appendSwitch('force-high-performance-gpu');
+app.commandLine.appendSwitch('disable-frame-rate-limit');
+app.commandLine.appendSwitch('webrtc-max-cpu-consumption-percentage', '100');
+
+// Disable background window throttling so games in foreground don't drop capture FPS
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+
+// Enable modern Windows Graphics Capture (WGC) and GPU hardware WebRTC encoding
 app.commandLine.appendSwitch(
   'enable-features',
-  'WebRtcHardwareVideoEncoding,WebRtcHardwareVideoDecoding,WebRtc-Bwe-Receiver-LimitWithHeadroom'
+  'AllowWgcScreenCapturer,AllowWgcWindowCapturer,WebRtcHardwareVideoEncoding,WebRtcHardwareVideoDecoding,WebRtc-Bwe-Receiver-LimitWithHeadroom'
 );
-app.commandLine.appendSwitch('disable-features', 'WebRtcHideLocalIpsWithMdns');
-app.commandLine.appendSwitch('webrtc-max-cpu-consumption-percentage', '100');
+app.commandLine.appendSwitch(
+  'disable-features',
+  'CalculateNativeWinOcclusion,IntensiveWakeUpThrottling,ThrottleDisplayNoneAndVisibilityHiddenFrame,WebRtcHideLocalIpsWithMdns'
+);
 
 let mainWindow = null;
 let embeddedServer = null;

@@ -9,6 +9,7 @@ import { initMedia, toggleMic, startScreenSharing, stopScreenSharing } from './w
 import { initChat } from './chat.js';
 import { initSocketClient } from './socket.js';
 import { initScreenPicker, openWebQualityModal } from './ui/screenPicker.js';
+import { initStreamStats } from './ui/streamStats.js';
 
 async function proceedToRoom() {
   const loginSection = document.getElementById('login-section');
@@ -109,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initChat();
   initSocketClient();
   initScreenPicker();
+  initStreamStats();
 
   // Bind main action buttons
   const actionBtn = document.getElementById('action-btn');

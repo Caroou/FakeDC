@@ -135,21 +135,26 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
           console.warn('Falha ao configurar bitrate para novo participante', e);
         }
 
+        // Prioritize fast hardware gaming codecs (H.264, VP9, VP8)
         try {
           const transceivers = pc.getTransceivers();
           const videoTransceiver = transceivers.find((t) => t.sender === sender);
           if (videoTransceiver && typeof RTCRtpReceiver !== 'undefined' && RTCRtpReceiver.getCapabilities) {
             const capabilities = RTCRtpReceiver.getCapabilities('video');
             if (capabilities && capabilities.codecs) {
-              const h264Codecs = capabilities.codecs.filter((c) => c.mimeType.toLowerCase() === 'video/h264');
-              if (h264Codecs.length > 0) {
-                const otherCodecs = capabilities.codecs.filter((c) => c.mimeType.toLowerCase() !== 'video/h264');
-                videoTransceiver.setCodecPreferences([...h264Codecs, ...otherCodecs]);
+              const fastCodecs = capabilities.codecs.filter((c) =>
+                ['video/h264', 'video/vp9', 'video/vp8'].includes(c.mimeType.toLowerCase())
+              );
+              const otherCodecs = capabilities.codecs.filter((c) =>
+                !['video/h264', 'video/vp9', 'video/vp8'].includes(c.mimeType.toLowerCase())
+              );
+              if (fastCodecs.length > 0) {
+                videoTransceiver.setCodecPreferences([...fastCodecs, ...otherCodecs]);
               }
             }
           }
         } catch (e) {
-          console.warn('Falha ao configurar preferências de codec H.264', e);
+          console.warn('Falha ao configurar preferências de codecs de alta velocidade', e);
         }
       }
     });
