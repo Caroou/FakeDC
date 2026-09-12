@@ -21,6 +21,7 @@ app.commandLine.appendSwitch('webrtc-max-cpu-consumption-percentage', '100');
 
 let mainWindow = null;
 let embeddedServer = null;
+let pendingMediaCallback = null;
 
 function startEmbeddedServer() {
   return new Promise((resolve) => {
@@ -64,13 +65,10 @@ function createWindow() {
 
   // Handle display media requests (screen / window capture)
   session.defaultSession.setDisplayMediaRequestHandler(async (request, callback) => {
-    try {
-      const sources = await desktopCapturer.getSources({ types: ['screen', 'window'] });
-      // Default to primary screen or first available source with audio loopback
-      const primary = sources.find(s => s.id.startsWith('screen:0')) || sources[0];
-      callback({ video: primary, audio: 'loopback' });
-    } catch (e) {
-      console.error('[Desktop] Erro ao capturar fontes de tela:', e);
+    pendingMediaCallback = callback;
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('open-screen-picker');
+    } else {
       callback({});
     }
   });
@@ -83,15 +81,57 @@ function createWindow() {
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+    if (pendingMediaCallback) {
+      pendingMediaCallback({});
+      pendingMediaCallback = null;
+    }
   });
 }
 
-// IPC handler to list desktop sources if requested
+// IPC handler to list desktop sources with high-res thumbnails
 ipcMain.handle('get-sources', async () => {
-  return await desktopCapturer.getSources({
-    types: ['window', 'screen'],
-    thumbnailSize: { width: 320, height: 180 }
-  });
+  try {
+    const sources = await desktopCapturer.getSources({
+      types: ['screen', 'window'],
+      thumbnailSize: { width: 360, height: 200 },
+      fetchWindowIcons: true
+    });
+
+    return sources.map((s) => ({
+      id: s.id,
+      name: s.name,
+      thumbnail: s.thumbnail.toDataURL(),
+      appIcon: s.appIcon ? s.appIcon.toDataURL() : null,
+      isScreen: s.id.startsWith('screen:')
+    }));
+  } catch (err) {
+    console.error('[FakeDC Desktop] Erro ao obter fontes:', err);
+    return [];
+  }
+});
+
+// User selected a specific screen or window from the modal
+ipcMain.handle('select-source', async (event, sourceId) => {
+  if (pendingMediaCallback) {
+    try {
+      const sources = await desktopCapturer.getSources({ types: ['screen', 'window'] });
+      const chosenSource = sources.find((s) => s.id === sourceId) || sources[0];
+      pendingMediaCallback({ video: chosenSource, audio: 'loopback' });
+    } catch (err) {
+      console.error('[FakeDC Desktop] Erro ao selecionar fonte:', err);
+      pendingMediaCallback({});
+    } finally {
+      pendingMediaCallback = null;
+    }
+  }
+});
+
+// User cancelled screen selection
+ipcMain.handle('cancel-source', () => {
+  if (pendingMediaCallback) {
+    pendingMediaCallback({});
+    pendingMediaCallback = null;
+  }
 });
 
 app.whenReady().then(async () => {

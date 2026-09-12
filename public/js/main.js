@@ -8,6 +8,7 @@ import { addRemoteMedia } from './ui/mediaRenderer.js';
 import { initMedia, toggleMic, toggleScreenShare } from './webrtc/media.js';
 import { initChat } from './chat.js';
 import { initSocketClient } from './socket.js';
+import { initScreenPicker } from './ui/screenPicker.js';
 
 async function proceedToRoom() {
   const loginSection = document.getElementById('login-section');
@@ -107,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSpeakingDetector();
   initChat();
   initSocketClient();
+  initScreenPicker();
 
   // Bind main action buttons
   const actionBtn = document.getElementById('action-btn');
