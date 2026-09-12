@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { ICE_SERVERS, MAX_VIDEO_BITRATE } from '../config.js';
+import { ICE_SERVERS, getTargetVideoBitrate, getTargetSdpBitrate } from '../config.js';
 import { addRemoteMedia, updateMediaVisibility } from '../ui/mediaRenderer.js';
 import { getAudioContext } from '../ui/speaking.js';
 
@@ -26,10 +26,11 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
       peerObj.makingOffer = true;
       let offer = await pc.createOffer();
 
-      // SDP Munging to force 8Mbps start bitrate and eliminate quality ramp-up blur
+      // SDP Munging to force target bitrate and eliminate quality ramp-up blur
       if (state.screenStream) {
-        if (!offer.sdp.includes('b=AS:8000')) {
-          offer.sdp = offer.sdp.replace(/(m=video.*\r\n)/g, '$1b=AS:8000\r\n');
+        const sdpBitrate = getTargetSdpBitrate();
+        if (!offer.sdp.includes(sdpBitrate)) {
+          offer.sdp = offer.sdp.replace(/(m=video.*\r\n)/g, `$1${sdpBitrate}\r\n`);
         }
       }
 
@@ -93,7 +94,7 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
         try {
           const params = sender.getParameters();
           if (!params.encodings) params.encodings = [{}];
-          params.encodings[0].maxBitrate = MAX_VIDEO_BITRATE;
+          params.encodings[0].maxBitrate = getTargetVideoBitrate();
           sender.setParameters(params).catch(e => console.warn(e));
         } catch (e) {
           console.warn('Falha ao configurar bitrate para novo participante', e);
@@ -141,8 +142,11 @@ export async function handleSignal({ from, signal, username: signalUsername, isM
 
       if (signal.type === 'offer') {
         let answer = await pc.createAnswer();
-        if (state.screenStream && !answer.sdp.includes('b=AS:8000')) {
-          answer.sdp = answer.sdp.replace(/(m=video.*\r\n)/g, '$1b=AS:8000\r\n');
+        if (state.screenStream) {
+          const sdpBitrate = getTargetSdpBitrate();
+          if (!answer.sdp.includes(sdpBitrate)) {
+            answer.sdp = answer.sdp.replace(/(m=video.*\r\n)/g, `$1${sdpBitrate}\r\n`);
+          }
         }
         await pc.setLocalDescription(answer);
         state.socket.emit('signal', { to: from, signal: pc.localDescription });

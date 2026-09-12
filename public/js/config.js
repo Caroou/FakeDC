@@ -14,4 +14,11 @@ export const SCREEN_SHARE_CONSTRAINTS = {
   audio: true
 };
 
-export const MAX_VIDEO_BITRATE = 8000000; // 8 Mbps for high quality 1080p60
+// Check if running inside the native Desktop Application
+export const isDesktopApp = () =>
+  typeof window !== 'undefined' && Boolean(window.desktopApp?.isDesktop);
+
+// 18 Mbps in Desktop for ultra-fast motion games, 8 Mbps in standard browser
+export const getTargetVideoBitrate = () => (isDesktopApp() ? 18000000 : 8000000);
+
+export const getTargetSdpBitrate = () => (isDesktopApp() ? 'b=AS:18000' : 'b=AS:8000');

@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { SCREEN_SHARE_CONSTRAINTS, MAX_VIDEO_BITRATE } from '../config.js';
+import { SCREEN_SHARE_CONSTRAINTS, getTargetVideoBitrate } from '../config.js';
 import { showToast } from '../ui/toast.js';
 import { addRemoteMedia } from '../ui/mediaRenderer.js';
 
@@ -91,11 +91,11 @@ export async function startScreenSharing() {
       if (screenVideoTrack) {
         const sender = pc.addTrack(screenVideoTrack, state.screenStream);
 
-        // Force maximum bitrate (8 Mbps)
+        // Force maximum bitrate (18 Mbps in Desktop, 8 Mbps in Web)
         try {
           const params = sender.getParameters();
           if (!params.encodings) params.encodings = [{}];
-          params.encodings[0].maxBitrate = MAX_VIDEO_BITRATE;
+          params.encodings[0].maxBitrate = getTargetVideoBitrate();
           sender.setParameters(params).catch(e => console.warn(e));
         } catch (e) {
           console.warn('Failed to prepare parameters', e);
