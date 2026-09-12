@@ -88,8 +88,8 @@ export async function startScreenSharing() {
       }
       console.warn('Falha na captura padrão, tentando fallback básico de vídeo:', mediaErr);
       stream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: false
+        video: { frameRate: { ideal: profile.frameRate } },
+        audio: true
       });
     }
 
@@ -109,10 +109,9 @@ export async function startScreenSharing() {
 
     if (screenVideoTrack) {
       screenVideoTrack.contentHint = 'motion';
-      const captureFps = profile.frameRate >= 60 ? 120 : 30;
       try {
         await screenVideoTrack.applyConstraints({
-          frameRate: { ideal: captureFps }
+          frameRate: { ideal: profile.frameRate, max: profile.frameRate }
         });
       } catch (e) {
         console.warn('applyConstraints frameRate warn:', e);
@@ -138,7 +137,6 @@ export async function startScreenSharing() {
             } else {
               delete params.encodings[0].maxFramerate;
             }
-            params.encodings[0].scaleResolutionDownBy = 1.0;
             params.degradationPreference = 'maintain-framerate';
             sender.setParameters(params).catch(e => console.warn(e));
           } catch (e) {

@@ -32,7 +32,7 @@ export function initStreamStats() {
 
         stats.forEach((report) => {
           // Outbound stats (streamer side)
-          if (report.type === 'outbound-rtp' && report.kind === 'video') {
+          if (report.type === 'outbound-rtp' && report.kind === 'video' && !report.isRemote && (report.framesSent > 0 || report.frameWidth > 0 || report.framesEncoded > 0)) {
             const key = `out-${userId}`;
             const currentFrames = report.framesSent || 0;
             const currentBytes = report.bytesSent || 0;
@@ -56,12 +56,15 @@ export function initStreamStats() {
               const dFrames = currentFrames - prev.frames;
               const dBytes = currentBytes - prev.bytes;
               const calculatedFps = Math.max(0, Math.round(dFrames / dt));
-              const fps = (report.framesPerSecond && report.framesPerSecond > 0)
-                ? Math.round(report.framesPerSecond)
-                : calculatedFps;
+              const fps = calculatedFps > 0 ? calculatedFps : (report.framesPerSecond ? Math.round(report.framesPerSecond) : 0);
               const bitrateMbps = Math.max(0, (dBytes * 8) / (dt * 1000000)).toFixed(1);
               const width = report.frameWidth || (state.screenStream?.getVideoTracks()[0]?.getSettings().width) || 0;
               const height = report.frameHeight || (state.screenStream?.getVideoTracks()[0]?.getSettings().height) || 0;
+              const limitation = report.qualityLimitationReason || 'none';
+              const trackFps = state.screenStream?.getVideoTracks()[0]?.getSettings()?.frameRate;
+              const capStr = trackFps ? Math.round(trackFps) : '';
+
+              console.log(`[Screen Stats Out] FPS:${fps} (calc:${calculatedFps}, rtc:${report.framesPerSecond}) ${width}x${height} ${bitrateMbps}Mb/s ${codec} Lim:${limitation} Cap:${capStr}`);
 
               prevStats.set(key, {
                 timestamp: report.timestamp,
@@ -69,12 +72,12 @@ export function initStreamStats() {
                 bytes: currentBytes
               });
 
-              updateStatsBadge('local-screen', fps, bitrateMbps, width, height, codec);
+              updateStatsBadge('local-screen', fps, bitrateMbps, width, height, codec, limitation, capStr);
             }
           }
 
           // Inbound stats (viewer side)
-          if (report.type === 'inbound-rtp' && report.kind === 'video') {
+          if (report.type === 'inbound-rtp' && report.kind === 'video' && !report.isRemote && (report.framesDecoded > 0 || report.frameWidth > 0 || report.framesReceived > 0)) {
             const key = `in-${userId}`;
             const currentFrames = report.framesDecoded || report.framesReceived || 0;
             const currentBytes = report.bytesReceived || 0;
@@ -96,12 +99,13 @@ export function initStreamStats() {
               const dFrames = currentFrames - prev.frames;
               const dBytes = currentBytes - prev.bytes;
               const calculatedFps = Math.max(0, Math.round(dFrames / dt));
-              const fps = (report.framesPerSecond && report.framesPerSecond > 0)
-                ? Math.round(report.framesPerSecond)
-                : calculatedFps;
+              const fps = calculatedFps > 0 ? calculatedFps : (report.framesPerSecond ? Math.round(report.framesPerSecond) : 0);
               const bitrateMbps = Math.max(0, (dBytes * 8) / (dt * 1000000)).toFixed(1);
               const width = report.frameWidth || 0;
               const height = report.frameHeight || 0;
+              const dropped = report.framesDropped || 0;
+
+              console.log(`[Screen Stats In] FPS:${fps} (calc:${calculatedFps}, rtc:${report.framesPerSecond}) ${width}x${height} ${bitrateMbps}Mb/s ${codec} Dropped:${dropped}`);
 
               prevStats.set(key, {
                 timestamp: report.timestamp,
@@ -109,7 +113,7 @@ export function initStreamStats() {
                 bytes: currentBytes
               });
 
-              updateStatsBadge(`${userId}-screen`, fps, bitrateMbps, width, height, codec);
+              updateStatsBadge(`${userId}-screen`, fps, bitrateMbps, width, height, codec, dropped > 0 ? `drop:${dropped}` : '', '');
             }
           }
         });
@@ -120,7 +124,7 @@ export function initStreamStats() {
   }, 1000);
 }
 
-function updateStatsBadge(mediaId, fps, bitrateMbps, width, height, codec) {
+function updateStatsBadge(mediaId, fps, bitrateMbps, width, height, codec, limitation = '', capStr = '') {
   const container = document.getElementById(`media-${mediaId}`);
   if (!container) return;
 
@@ -129,12 +133,12 @@ function updateStatsBadge(mediaId, fps, bitrateMbps, width, height, codec) {
     badge = document.createElement('div');
     badge.id = `stats-badge-${mediaId}`;
     badge.className =
-      'absolute top-3 left-3 bg-black/80 backdrop-blur-md font-mono text-[11px] px-2.5 py-1 rounded-lg z-30 shadow-lg border border-white/15 flex items-center gap-2 pointer-events-none select-none';
+      'absolute top-3 left-3 bg-black/85 backdrop-blur-md font-mono text-[11px] px-2.5 py-1 rounded-lg z-30 shadow-lg border border-white/15 flex items-center gap-2 pointer-events-none select-none';
     container.appendChild(badge);
   }
 
-  const fpsColor = fps >= 45 ? 'text-emerald-400' : fps >= 25 ? 'text-amber-400' : 'text-rose-400';
-  const dotColor = fps >= 45 ? 'bg-emerald-400 animate-pulse' : fps >= 25 ? 'bg-amber-400' : 'bg-rose-400';
+  const fpsColor = fps >= 55 ? 'text-emerald-400' : fps >= 30 ? 'text-amber-400' : 'text-rose-400';
+  const dotColor = fps >= 55 ? 'bg-emerald-400 animate-pulse' : fps >= 30 ? 'bg-amber-400' : 'bg-rose-400';
   const resStr = width && height ? `${height || width}p` : '';
 
   badge.innerHTML = `
@@ -143,5 +147,7 @@ function updateStatsBadge(mediaId, fps, bitrateMbps, width, height, codec) {
     ${bitrateMbps > 0 ? `<span class="text-zinc-500">|</span> <span class="text-zinc-200">${bitrateMbps} Mb/s</span>` : ''}
     ${resStr ? `<span class="text-zinc-500">|</span> <span class="text-zinc-300">${resStr}</span>` : ''}
     <span class="text-zinc-400 uppercase font-semibold text-[10px]">${codec}</span>
+    ${capStr ? `<span class="text-zinc-500">|</span> <span class="text-cyan-400 text-[10px]">Cap:${capStr}</span>` : ''}
+    ${limitation && limitation !== 'none' ? `<span class="text-zinc-500">|</span> <span class="text-rose-400 text-[10px]">Lim:${limitation}</span>` : ''}
   `;
 }

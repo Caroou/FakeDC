@@ -33,7 +33,7 @@ app.commandLine.appendSwitch('disable-background-timer-throttling');
 // Enable GPU hardware WebRTC encoding/decoding using stable DirectX DXGI capturer
 app.commandLine.appendSwitch(
   'enable-features',
-  'WebRtcHardwareVideoEncoding,WebRtcHardwareVideoDecoding,WebRtc-Bwe-Receiver-LimitWithHeadroom,MediaFoundationVideoCapture'
+  'MediaFoundationVideoEncoderAcceleration,MediaFoundationVideoCapture,WebRtcHardwareVideoEncoding,WebRtcHardwareVideoDecoding,WebRtc-Bwe-Receiver-LimitWithHeadroom'
 );
 app.commandLine.appendSwitch(
   'disable-features',

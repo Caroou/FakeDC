@@ -8,8 +8,8 @@ export function configureFastCodecs(videoTransceiver) {
   try {
     const capabilities = RTCRtpReceiver.getCapabilities('video');
     if (capabilities && capabilities.codecs) {
-      // Prioritize modern multi-core GPU gaming codecs (VP9, AV1, VP8) over single-threaded OpenH264
-      const preferred = ['video/vp9', 'video/av01', 'video/vp8', 'video/h264'];
+      // Prioritize hardware GPU gaming codecs (H.264 hardware on AMD AMF/Nvidia NVENC/Intel QSV)
+      const preferred = ['video/h264', 'video/vp9', 'video/vp8', 'video/av01'];
       const prioritized = capabilities.codecs.filter((c) =>
         preferred.includes(c.mimeType.toLowerCase())
       );
@@ -39,9 +39,11 @@ export function applyBitrateToSdp(sdp, profile) {
 
   let result = sdp;
 
-  // 1. Force b=AS (kbps) and b=TIAS (bps) under m=video
+  // 1. Force b=AS (kbps) and b=TIAS (bps) under m=video (placed after c= line per RFC 4566)
   if (result.includes('b=AS:')) {
     result = result.replace(/b=AS:\d+/g, `b=AS:${kbps}`);
+  } else if (result.includes('c=IN')) {
+    result = result.replace(/(c=IN[^\r\n]*(?:\r?\n))/g, (match, line) => `${line}b=AS:${kbps}\r\n`);
   } else {
     result = result.replace(/(m=video[^\r\n]*(?:\r?\n))/g, (match, line) => `${line}b=AS:${kbps}\r\n`);
   }
@@ -180,7 +182,6 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
           } else {
             delete params.encodings[0].maxFramerate;
           }
-          params.encodings[0].scaleResolutionDownBy = 1.0;
           params.degradationPreference = 'maintain-framerate';
           sender.setParameters(params).catch((e) => console.warn(e));
         } catch (e) {

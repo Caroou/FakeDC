@@ -58,13 +58,11 @@ export const getProfile = (qualityId = '1080p60') =>
 
 export const getScreenConstraints = (qualityId = '1080p60') => {
   const profile = getProfile(qualityId);
-  // Request 120 FPS capture headroom so Chromium's oracle never drops frames on 75Hz/144Hz monitors down to 37-45 FPS
-  const captureFps = profile.frameRate >= 60 ? 120 : 30;
   return {
     video: {
       width: { ideal: profile.width },
       height: { ideal: profile.height },
-      frameRate: { ideal: captureFps }
+      frameRate: { ideal: profile.frameRate, max: profile.frameRate }
     },
     audio: true
   };
