@@ -88,28 +88,26 @@ export async function startScreenSharing() {
     const screenVideoTrack = state.screenStream.getVideoTracks()[0];
     const screenAudioTrack = state.screenStream.getAudioTracks()[0];
 
-    // Hint browser to prioritize real-time motion and avoid jitter buffer delay
-    if (screenVideoTrack) {
-      screenVideoTrack.contentHint = 'motion';
-    }
-
     for (const userId in state.peers) {
       const { pc } = state.peers[userId];
 
       if (screenVideoTrack) {
         const sender = pc.addTrack(screenVideoTrack, state.screenStream);
 
-        // Configure targeted profile bitrate (prevents network congestion / lag)
+        // Configure targeted profile bitrate and strict resolution preservation
         try {
           const params = sender.getParameters();
           if (!params.encodings) params.encodings = [{}];
           params.encodings[0].maxBitrate = profile.bitrate;
+          params.encodings[0].scaleResolutionDownBy = 1.0;
+          params.encodings[0].maxFramerate = profile.frameRate;
+          params.degradationPreference = 'balanced';
           sender.setParameters(params).catch(e => console.warn(e));
         } catch (e) {
           console.warn('Falha ao configurar bitrate para a transmissão', e);
         }
 
-        // Prioritize hardware H.264 codec
+        // Prioritize hardware H.264 High Profile codec
         try {
           const transceivers = pc.getTransceivers();
           const videoTransceiver = transceivers.find(t => t.sender === sender);
@@ -117,10 +115,13 @@ export async function startScreenSharing() {
             const capabilities = RTCRtpReceiver.getCapabilities('video');
             if (capabilities && capabilities.codecs) {
               const h264Codecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() === 'video/h264');
-              if (h264Codecs.length > 0) {
-                const otherCodecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() !== 'video/h264');
-                videoTransceiver.setCodecPreferences([...h264Codecs, ...otherCodecs]);
-              }
+              const h264High = h264Codecs.filter(c => c.sdpFmtpLine?.includes('profile-level-id=6400'));
+              const h264Main = h264Codecs.filter(c => c.sdpFmtpLine?.includes('profile-level-id=4d00'));
+              const h264Rest = h264Codecs.filter(c => !c.sdpFmtpLine?.includes('profile-level-id=6400') && !c.sdpFmtpLine?.includes('profile-level-id=4d00'));
+              const sortedH264 = [...h264High, ...h264Main, ...h264Rest];
+
+              const otherCodecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() !== 'video/h264');
+              videoTransceiver.setCodecPreferences([...sortedH264, ...otherCodecs]);
             }
           }
         } catch (e) {

@@ -3,6 +3,32 @@ import { ICE_SERVERS, getProfile } from '../config.js';
 import { addRemoteMedia, updateMediaVisibility } from '../ui/mediaRenderer.js';
 import { getAudioContext } from '../ui/speaking.js';
 
+export function enhanceSdp(sdp, profile) {
+  const kbps = Math.floor(profile.bitrate / 1000);
+  const bps = profile.bitrate;
+  const minKbps = profile.minBitrateKbps || Math.floor(kbps * 0.65);
+
+  let modified = sdp;
+
+  // 1. Force b=AS (kbps) and modern b=TIAS (bits per second) in video media section
+  if (!modified.includes(`b=AS:${kbps}`)) {
+    modified = modified.replace(/(m=video.*\r\n)/g, `$1b=AS:${kbps}\r\nb=TIAS:${bps}\r\n`);
+  }
+
+  // 2. Inject x-google-min-bitrate, x-google-start-bitrate and x-google-max-bitrate into fmtp lines
+  // This explicitly overrides Google's 300kbps slow-start and prevents the encoder from dropping into blurry pixels
+  const fmtpParams = `x-google-min-bitrate=${minKbps};x-google-start-bitrate=${kbps};x-google-max-bitrate=${kbps}`;
+
+  modified = modified.replace(/a=fmtp:(\d+)(.*)\r\n/g, (match, pt, rest) => {
+    if (rest.includes('x-google-min-bitrate')) {
+      return match;
+    }
+    return `a=fmtp:${pt}${rest};${fmtpParams}\r\n`;
+  });
+
+  return modified;
+}
+
 export function createPeerConnection(userId, peerUsername, isMuted = false) {
   const pc = new RTCPeerConnection(ICE_SERVERS);
   const isPolite = state.socket.id > userId;
@@ -26,12 +52,10 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
       peerObj.makingOffer = true;
       let offer = await pc.createOffer();
 
-      // SDP Munging to force profile bitrate and eliminate quality ramp-up blur
+      // SDP Munging to guarantee high-definition bitrate and prevent pixelation
       if (state.screenStream) {
         const profile = getProfile(state.selectedQuality);
-        if (!offer.sdp.includes(profile.sdpBitrate)) {
-          offer.sdp = offer.sdp.replace(/(m=video.*\r\n)/g, `$1${profile.sdpBitrate}\r\n`);
-        }
+        offer.sdp = enhanceSdp(offer.sdp, profile);
       }
 
       await pc.setLocalDescription(offer);
@@ -101,6 +125,9 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
           const params = sender.getParameters();
           if (!params.encodings) params.encodings = [{}];
           params.encodings[0].maxBitrate = profile.bitrate;
+          params.encodings[0].scaleResolutionDownBy = 1.0;
+          params.encodings[0].maxFramerate = profile.frameRate;
+          params.degradationPreference = 'balanced';
           sender.setParameters(params).catch(e => console.warn(e));
         } catch (e) {
           console.warn('Falha ao configurar bitrate para novo participante', e);
@@ -113,10 +140,14 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
             const capabilities = RTCRtpReceiver.getCapabilities('video');
             if (capabilities && capabilities.codecs) {
               const h264Codecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() === 'video/h264');
-              if (h264Codecs.length > 0) {
-                const otherCodecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() !== 'video/h264');
-                videoTransceiver.setCodecPreferences([...h264Codecs, ...otherCodecs]);
-              }
+              // Sort High Profile ahead of Baseline to unlock 8x8 DCT transform clarity
+              const h264High = h264Codecs.filter(c => c.sdpFmtpLine?.includes('profile-level-id=6400'));
+              const h264Main = h264Codecs.filter(c => c.sdpFmtpLine?.includes('profile-level-id=4d00'));
+              const h264Rest = h264Codecs.filter(c => !c.sdpFmtpLine?.includes('profile-level-id=6400') && !c.sdpFmtpLine?.includes('profile-level-id=4d00'));
+              const sortedH264 = [...h264High, ...h264Main, ...h264Rest];
+
+              const otherCodecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() !== 'video/h264');
+              videoTransceiver.setCodecPreferences([...sortedH264, ...otherCodecs]);
             }
           }
         } catch (e) {
@@ -150,9 +181,7 @@ export async function handleSignal({ from, signal, username: signalUsername, isM
         let answer = await pc.createAnswer();
         if (state.screenStream) {
           const profile = getProfile(state.selectedQuality);
-          if (!answer.sdp.includes(profile.sdpBitrate)) {
-            answer.sdp = answer.sdp.replace(/(m=video.*\r\n)/g, `$1${profile.sdpBitrate}\r\n`);
-          }
+          answer.sdp = enhanceSdp(answer.sdp, profile);
         }
         await pc.setLocalDescription(answer);
         state.socket.emit('signal', { to: from, signal: pc.localDescription });
