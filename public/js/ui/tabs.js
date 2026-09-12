@@ -11,8 +11,8 @@ export function initTabs() {
 
   tabCreate.addEventListener('click', () => {
     state.currentTab = 'create';
-    tabCreate.className = 'flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 bg-zinc-600 text-white shadow';
-    tabJoin.className = 'flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 text-zinc-400 hover:text-zinc-200';
+    tabCreate.className = 'flex-1 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 bg-zinc-600 text-white shadow';
+    tabJoin.className = 'flex-1 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 text-zinc-400 hover:text-zinc-200';
     createSection.classList.remove('hidden-section');
     joinSection.classList.add('hidden-section');
     actionBtn.innerText = 'Criar Sala';
@@ -20,8 +20,8 @@ export function initTabs() {
 
   tabJoin.addEventListener('click', () => {
     state.currentTab = 'join';
-    tabJoin.className = 'flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 bg-zinc-600 text-white shadow';
-    tabCreate.className = 'flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 text-zinc-400 hover:text-zinc-200';
+    tabJoin.className = 'flex-1 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 bg-zinc-600 text-white shadow';
+    tabCreate.className = 'flex-1 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 text-zinc-400 hover:text-zinc-200';
     joinSection.classList.remove('hidden-section');
     createSection.classList.add('hidden-section');
     actionBtn.innerText = 'Conectar à Sala';
