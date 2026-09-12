@@ -1,41 +1,38 @@
-# FakeDC
+<div align="center">
+  <img src="https://cdn-icons-png.flaticon.com/256/2111/2111370.png" width="100" alt="FakeDC Logo">
+  <h1>FakeDC</h1>
+  <p><b>Chamadas de voz e compartilhamento de tela de altíssima qualidade (1080p 60fps).</b></p>
+</div>
 
-Um clone simplificado e levíssimo do Discord, focado em chamadas de voz e compartilhamento de tela de altíssima qualidade (1080p 60fps) usando conexões Peer-to-Peer diretas.
+Um clone simplificado e levíssimo focado no que importa: transmissão de tela fluida usando conexões Peer-to-Peer diretas. Disponível pelo Navegador e em Aplicativo Desktop.
 
-## Funcionalidades
-- **Interface Premium (Tailwind CSS):** Design System totalmente refeito seguindo fielmente a paleta de cores e estilo visual moderno do Discord, totalmente responsivo para celular.
-- **Salas Privadas e Segurança:** Crie ou entre em salas de forma fácil. O servidor bloqueia automaticamente usuários com o mesmo nome na sala.
-- **Notificações Toast:** Sistema moderno de alertas deslizantes que substituem os popups nativos feios do navegador.
-- **Detector de Voz Dinâmico:** Anéis verdes iluminam automaticamente a foto de quem está falando na call (usando `AudioContext`).
-- **Compartilhamento de Tela Absoluto (1080p 60FPS):**
-  - **SDP Munging:** Injeção forçada de `b=AS:8000` para iniciar a transmissão travada em 8 Megabits, ignorando o limitador padrão do Chrome e garantindo que filmes e séries já comecem em Full HD no segundo zero.
-  - **H.264:** Utilização estrita do codec H.264 para assegurar aceleração de hardware (GPU), removendo lag e estabilizando 60 quadros por segundo.
-  - **Modo Cinema Automático:** Fique 3 segundos com o mouse parado e todos os botões e informações desaparecerão suavemente da tela.
-- **Controles de Usuário (Dock Flutuante):**
-  - Ajuste individual de volume (deslizador na miniatura).
-  - Mutar localmente o áudio e aviso de microfone cortado sincronizado.
-- **Chat de Texto** em tempo real via Socket.io.
+## ✨ Destaques
 
-## Tecnologias Utilizadas
-- **Backend:** Node.js, Express, Socket.io (Apenas sinalização P2P e chat de texto)
-- **Frontend:** HTML, Tailwind CSS, Vanilla JavaScript, WebRTC nativo avançado.
+- 🚀 **Aplicativo Desktop Dedicado:** Feito com Electron, o `.exe` nativo burla as limitações de economia de energia dos navegadores para entregar compartilhamento de tela cravado em **60 FPS constantes**, ideal para jogos e vídeos.
+- 📺 **Qualidade "Nitro" Gratuita:** SDP modificado para injetar bitrate máximo no WebRTC, forçando a transmissão a começar em alta definição sem demora.
+- 🎨 **Design Moderno:** Interface polida (Tailwind CSS) com detecção dinâmica de voz, modo cinema imersivo e métricas de rede em tempo real.
+- 🔒 **Leve e Seguro:** As transmissões de vídeo são P2P (ponto a ponto). Seu vídeo viaja criptografado direto para seus amigos sem pesar no servidor.
 
-## Como Rodar Localmente
-1. Tenha o [Node.js](https://nodejs.org/) instalado.
-2. No terminal (dentro da pasta do projeto), instale as dependências:
-   ```bash
-   npm install
-   ```
-3. Inicie o servidor:
-   ```bash
-   npm start
-   ```
-4. Abra no navegador: `http://localhost:3000`
+## 📥 Instalação
 
-## Como Hospedar (Deploy)
-Este aplicativo é ultra-leve para a nuvem. Como o vídeo viaja de forma P2P (entre os computadores das pessoas) e não pelo servidor, serviços gratuitos como **Koyeb** ou **Render** rodam o site perfeitamente.
-O Render instala os pacotes com `npm install` e inicia com `npm start` de forma automática.
-*Aviso:* Serviços Serverless puros (como a Vercel tradicional) não suportam WebSockets longos do Socket.io. Use Render/Koyeb.
+### Usando o Aplicativo Desktop (Recomendado para 60 FPS)
+Baixe a versão mais recente em [Releases](https://github.com/Caroou/FakeDC/releases/download/setup/FakeDC.Setup.1.0.0.exe) e instale no Windows.
+
+### Rodando o Servidor (Desenvolvimento)
+1. Instale as dependências: `npm install`
+2. Inicie o servidor Web e de Sinalização: `npm start`
+3. Acesse `http://localhost:3000`
+
+### Gerando o Instalador (.exe)
+Para compilar o aplicativo para o Windows a partir do código fonte:
+```bash
+# Abra o terminal como Administrador
+npm run build
+```
+O executável será gerado na pasta `dist/`.
+
+## ☁️ Hospedagem
+O servidor atua apenas conectando os usuários (sinalização via Socket.io). Sendo assim, o consumo de banda é ínfimo. Recomenda-se hospedar o código em plataformas como **Render** ou **Koyeb** (Vercel Serverless não é compatível com WebSockets longos).
 
 ---
-Criado para curtir séries e conversar com a mais alta qualidade possível direto do navegador.
+*Feito para gamers e amigos que não abrem mão de qualidade.*
