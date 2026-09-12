@@ -88,7 +88,7 @@ export async function startScreenSharing() {
       }
       console.warn('Falha na captura padrão, tentando fallback básico de vídeo:', mediaErr);
       stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { frameRate: { ideal: profile.frameRate } },
+        video: { frameRate: { ideal: 60, max: 60 } },
         audio: true
       });
     }
@@ -131,12 +131,8 @@ export async function startScreenSharing() {
             if (!params.encodings || params.encodings.length === 0) {
               params.encodings = [{}];
             }
-            params.encodings[0].maxBitrate = profile.bitrate;
-            if (profile.frameRate < 60) {
-              params.encodings[0].maxFramerate = profile.frameRate;
-            } else {
-              delete params.encodings[0].maxFramerate;
-            }
+            params.encodings[0].maxBitrate = 8000000;
+            params.encodings[0].maxFramerate = 60;
             params.degradationPreference = 'maintain-framerate';
             sender.setParameters(params).catch(e => console.warn(e));
           } catch (e) {
@@ -177,7 +173,7 @@ export async function startScreenSharing() {
 
   } catch (err) {
     if (err.name !== 'NotAllowedError' && err.name !== 'AbortError') {
-      console.error('Error sharing screen', err);
+      console.error('Falha na captura:', err.name, err.message, err);
       showToast('Não foi possível iniciar o compartilhamento de tela.', 'error');
     }
     if (screenShareBtn) {

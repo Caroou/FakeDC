@@ -37,7 +37,7 @@ app.commandLine.appendSwitch(
 );
 app.commandLine.appendSwitch(
   'disable-features',
-  'CalculateNativeWinOcclusion,IntensiveWakeUpThrottling,ThrottleDisplayNoneAndVisibilityHiddenFrame,WebRtcHideLocalIpsWithMdns'
+  'CalculateNativeWinOcclusion,IntensiveWakeUpThrottling,ThrottleDisplayNoneAndVisibilityHiddenFrame,WebRtcHideLocalIpsWithMdns,WebRtcCpuAdaptation'
 );
 
 const openWindows = new Set();
