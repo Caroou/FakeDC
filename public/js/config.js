@@ -16,7 +16,7 @@ export const QUALITY_PROFILES = {
     width: 1280,
     height: 720,
     frameRate: 60,
-    bitrate: 6500000, // 6.5 Mbps (Discord Nitro 720p60)
+    bitrate: 6500000, // 6.5 Mbps
     startBitrateKbps: 5000,
     minBitrateKbps: 3500,
     label: '720p 60 FPS'
@@ -26,7 +26,7 @@ export const QUALITY_PROFILES = {
     width: 1920,
     height: 1080,
     frameRate: 60,
-    bitrate: 10000000, // 10.0 Mbps (Discord Nitro 1080p60 benchmark)
+    bitrate: 10000000, // 10.0 Mbps
     startBitrateKbps: 7500,
     minBitrateKbps: 5000,
     label: '1080p 60 FPS'
