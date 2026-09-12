@@ -97,7 +97,13 @@ function createWindow() {
     win.show();
   });
 
-  win.loadURL(`http://localhost:${config.PORT}`);
+  // Se o aplicativo estiver empacotado (.exe final), carrega a versão em nuvem
+  // Se estiver em desenvolvimento, carrega o localhost
+  if (app.isPackaged) {
+    win.loadURL('https://fakedc.onrender.com/');
+  } else {
+    win.loadURL(`http://localhost:${config.PORT}`);
+  }
 
   win.on('closed', () => {
     openWindows.delete(win);
@@ -178,7 +184,10 @@ function getWindowFromRequest(request) {
 }
 
 app.whenReady().then(async () => {
-  await startEmbeddedServer();
+  // Apenas inicia o servidor local se estiver em desenvolvimento
+  if (!app.isPackaged) {
+    await startEmbeddedServer();
+  }
 
   // Handle display media requests (screen / window capture) for all windows safely
   session.defaultSession.setDisplayMediaRequestHandler(async (request, callback) => {
