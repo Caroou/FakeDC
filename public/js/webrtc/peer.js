@@ -113,6 +113,17 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
     }
   };
 
+  pc.oniceconnectionstatechange = () => {
+    if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+      console.log(`[WebRTC] ICE state (${pc.iceConnectionState}) com ${peerUsername}. Tentando ICE restart...`);
+      try {
+        pc.restartIce();
+      } catch (e) {
+        console.warn('Falha ao reiniciar ICE:', e);
+      }
+    }
+  };
+
   pc.ontrack = ({ track, streams, receiver }) => {
     // Low-latency playout delay optimization (prevents video frame buffer delay)
     if (receiver && 'playoutDelayHint' in receiver) {

@@ -49,6 +49,7 @@ function registerRoomHandlers(io, socket) {
     socket.roomId = roomId;
     socket.username = username;
 
+    RoomManager.cancelRoomCleanup(roomId);
     RoomManager.setUser(socket.id, { username, roomId, isMuted: false });
     RoomManager.ensureRoom(roomId, '');
 

@@ -1,6 +1,7 @@
 // In-memory state for rooms and active connected users
 const activeRooms = new Map(); // roomId -> { pin: string }
 const users = {}; // socket.id -> { username, roomId, isMuted }
+const roomCleanupTimers = new Map(); // roomId -> timeoutId
 
 const RoomManager = {
   hasRoom(roomId) {
@@ -15,15 +16,18 @@ const RoomManager = {
     if (activeRooms.has(roomId)) {
       return false;
     }
+    this.cancelRoomCleanup(roomId);
     activeRooms.set(roomId, { pin });
     return true;
   },
 
   deleteRoom(roomId) {
+    this.cancelRoomCleanup(roomId);
     return activeRooms.delete(roomId);
   },
 
   ensureRoom(roomId, pin = '') {
+    this.cancelRoomCleanup(roomId);
     if (!activeRooms.has(roomId)) {
       activeRooms.set(roomId, { pin });
     }
@@ -53,7 +57,7 @@ const RoomManager = {
     if (!username) return false;
     const lowerUsername = username.toLowerCase();
     return Object.values(users).some(
-      u => u.roomId === roomId && u.username.toLowerCase() === lowerUsername
+      (u) => u.roomId === roomId && u.username.toLowerCase() === lowerUsername
     );
   },
 
@@ -61,7 +65,24 @@ const RoomManager = {
     if (!roomId) return;
     const room = io.sockets.adapter.rooms.get(roomId);
     if (!room || room.size === 0) {
-      activeRooms.delete(roomId);
+      if (!roomCleanupTimers.has(roomId)) {
+        // 2-minute grace period before cleaning empty room to allow automatic reconnection
+        const timer = setTimeout(() => {
+          const currentRoom = io.sockets.adapter.rooms.get(roomId);
+          if (!currentRoom || currentRoom.size === 0) {
+            activeRooms.delete(roomId);
+          }
+          roomCleanupTimers.delete(roomId);
+        }, 120000);
+        roomCleanupTimers.set(roomId, timer);
+      }
+    }
+  },
+
+  cancelRoomCleanup(roomId) {
+    if (roomCleanupTimers.has(roomId)) {
+      clearTimeout(roomCleanupTimers.get(roomId));
+      roomCleanupTimers.delete(roomId);
     }
   }
 };
