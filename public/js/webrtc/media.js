@@ -108,6 +108,13 @@ export async function startScreenSharing() {
 
     if (screenVideoTrack) {
       screenVideoTrack.contentHint = 'motion';
+      try {
+        await screenVideoTrack.applyConstraints({
+          frameRate: { ideal: profile.frameRate }
+        });
+      } catch (e) {
+        console.warn('applyConstraints frameRate warn:', e);
+      }
     }
 
     for (const userId in state.peers) {
@@ -124,7 +131,11 @@ export async function startScreenSharing() {
               params.encodings = [{}];
             }
             params.encodings[0].maxBitrate = profile.bitrate;
-            params.encodings[0].maxFramerate = profile.frameRate;
+            if (profile.frameRate < 60) {
+              params.encodings[0].maxFramerate = profile.frameRate;
+            } else {
+              delete params.encodings[0].maxFramerate;
+            }
             params.encodings[0].scaleResolutionDownBy = 1.0;
             params.degradationPreference = 'maintain-framerate';
             sender.setParameters(params).catch(e => console.warn(e));

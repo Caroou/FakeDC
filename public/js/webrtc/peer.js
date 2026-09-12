@@ -127,7 +127,11 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
             params.encodings = [{}];
           }
           params.encodings[0].maxBitrate = profile.bitrate;
-          params.encodings[0].maxFramerate = profile.frameRate;
+          if (profile.frameRate < 60) {
+            params.encodings[0].maxFramerate = profile.frameRate;
+          } else {
+            delete params.encodings[0].maxFramerate;
+          }
           params.encodings[0].scaleResolutionDownBy = 1.0;
           params.degradationPreference = 'maintain-framerate';
           sender.setParameters(params).catch((e) => console.warn(e));

@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "desktop": "electron desktop/main.js"
+    "desktop": "electron desktop/main.js",
+    "desktop:2": "electron desktop/main.js --instance=2"
   },
   "dependencies": {
     "express": "^4.18.2",

@@ -7,12 +7,21 @@ const expressApp = require('../src/app');
 const config = require('../src/config');
 const initSocketServer = require('../src/socket');
 
+// Support multi-instance testing via --instance=2
+const instanceArg = process.argv.find((arg) => arg.startsWith('--instance='));
+if (instanceArg) {
+  const instanceId = instanceArg.split('=')[1];
+  const customUserData = path.join(app.getPath('appData'), `FakeDC-Instance-${instanceId}`);
+  app.setPath('userData', customUserData);
+}
+
 // === Performance & GPU Flags for High-Motion 60 FPS Game Streaming ===
 app.commandLine.appendSwitch('ignore-gpu-blocklist');
 app.commandLine.appendSwitch('enable-gpu-rasterization');
 app.commandLine.appendSwitch('enable-zero-copy');
 app.commandLine.appendSwitch('force-high-performance-gpu');
-app.commandLine.appendSwitch('disable-frame-rate-limit');
+app.commandLine.appendSwitch('enable-accelerated-video-decode');
+app.commandLine.appendSwitch('enable-accelerated-mjpeg-decode');
 app.commandLine.appendSwitch('webrtc-max-cpu-consumption-percentage', '100');
 
 // Disable background window throttling so games in foreground don't drop capture FPS
@@ -30,7 +39,7 @@ app.commandLine.appendSwitch(
   'CalculateNativeWinOcclusion,IntensiveWakeUpThrottling,ThrottleDisplayNoneAndVisibilityHiddenFrame,WebRtcHideLocalIpsWithMdns'
 );
 
-let mainWindow = null;
+const openWindows = new Set();
 let embeddedServer = null;
 let pendingMediaCallback = null;
 
@@ -58,12 +67,12 @@ function startEmbeddedServer() {
 }
 
 function createWindow() {
-  mainWindow = new BrowserWindow({
+  const win = new BrowserWindow({
     width: 1280,
     height: 760,
     minWidth: 960,
     minHeight: 600,
-    title: 'FakeDC - Desktop Gaming Edition',
+    title: `FakeDC - Desktop Gaming Edition${openWindows.size > 0 ? ` (Janela ${openWindows.size + 1})` : ''}`,
     backgroundColor: '#1e1f22',
     autoHideMenuBar: true,
     show: false,
@@ -74,29 +83,26 @@ function createWindow() {
     }
   });
 
-  // Handle display media requests (screen / window capture)
-  session.defaultSession.setDisplayMediaRequestHandler(async (request, callback) => {
-    pendingMediaCallback = callback;
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('open-screen-picker');
-    } else {
-      callback({});
+  openWindows.add(win);
+
+  // Shortcut Ctrl+N or Ctrl+Shift+N to open a 2nd desktop window for testing
+  win.webContents.on('before-input-event', (event, input) => {
+    if (input.control && input.key.toLowerCase() === 'n' && input.type === 'keyDown') {
+      createWindow();
     }
   });
 
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
+  win.once('ready-to-show', () => {
+    win.show();
   });
 
-  mainWindow.loadURL(`http://localhost:${config.PORT}`);
+  win.loadURL(`http://localhost:${config.PORT}`);
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-    if (pendingMediaCallback) {
-      pendingMediaCallback({});
-      pendingMediaCallback = null;
-    }
+  win.on('closed', () => {
+    openWindows.delete(win);
   });
+
+  return win;
 }
 
 // IPC handler to list desktop sources with high-res thumbnails
@@ -151,6 +157,18 @@ ipcMain.handle('cancel-source', () => {
 
 app.whenReady().then(async () => {
   await startEmbeddedServer();
+
+  // Handle display media requests (screen / window capture) for all windows
+  session.defaultSession.setDisplayMediaRequestHandler(async (request, callback) => {
+    pendingMediaCallback = callback;
+    const targetWin = BrowserWindow.fromWebContents(request.frame) || Array.from(openWindows)[0];
+    if (targetWin && !targetWin.isDestroyed()) {
+      targetWin.webContents.send('open-screen-picker');
+    } else {
+      callback({});
+    }
+  });
+
   createWindow();
 
   app.on('activate', () => {

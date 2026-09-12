@@ -62,7 +62,7 @@ export const getScreenConstraints = (qualityId = '1080p60') => {
     video: {
       width: { ideal: profile.width },
       height: { ideal: profile.height },
-      frameRate: { ideal: profile.frameRate, max: profile.frameRate }
+      frameRate: { ideal: profile.frameRate }
     },
     audio: true
   };

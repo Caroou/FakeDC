@@ -60,7 +60,11 @@ export function initScreenPicker() {
               const params = videoSender.getParameters();
               if (params.encodings && params.encodings.length > 0) {
                 params.encodings[0].maxBitrate = profile.bitrate;
-                params.encodings[0].maxFramerate = profile.frameRate;
+                if (profile.frameRate < 60) {
+                  params.encodings[0].maxFramerate = profile.frameRate;
+                } else {
+                  delete params.encodings[0].maxFramerate;
+                }
                 videoSender.setParameters(params).catch((e) => console.warn(e));
               }
             } catch (e) {
