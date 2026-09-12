@@ -109,9 +109,10 @@ export async function startScreenSharing() {
 
     if (screenVideoTrack) {
       screenVideoTrack.contentHint = 'motion';
+      const captureFps = profile.frameRate >= 60 ? 120 : 30;
       try {
         await screenVideoTrack.applyConstraints({
-          frameRate: { ideal: profile.frameRate }
+          frameRate: { ideal: captureFps }
         });
       } catch (e) {
         console.warn('applyConstraints frameRate warn:', e);

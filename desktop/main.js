@@ -18,6 +18,8 @@ if (instanceArg) {
 // === Performance & GPU Flags for High-Motion 60 FPS Game Streaming ===
 app.commandLine.appendSwitch('ignore-gpu-blocklist');
 app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('force-high-performance-gpu');
+app.commandLine.appendSwitch('gpu-preference', 'high-performance');
 app.commandLine.appendSwitch('enable-accelerated-video-decode');
 app.commandLine.appendSwitch('enable-accelerated-video-encode');
 app.commandLine.appendSwitch('enable-gpu-memory-buffers');
