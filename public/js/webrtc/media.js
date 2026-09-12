@@ -85,10 +85,9 @@ export async function startScreenSharing() {
       if (mediaErr.name === 'NotAllowedError' || mediaErr.name === 'AbortError') {
         throw mediaErr;
       }
-      console.warn('Falha ao capturar com áudio, tentando apenas vídeo:', mediaErr);
-      const constraints = getScreenConstraints(state.selectedQuality);
+      console.warn('Falha na captura padrão, tentando fallback básico de vídeo:', mediaErr);
       stream = await navigator.mediaDevices.getDisplayMedia({
-        video: constraints.video,
+        video: true,
         audio: false
       });
     }
@@ -111,44 +110,52 @@ export async function startScreenSharing() {
       const { pc } = state.peers[userId];
 
       if (screenVideoTrack) {
-        const sender = pc.addTrack(screenVideoTrack, state.screenStream);
-
-        // Configure targeted profile bitrate
         try {
-          const params = sender.getParameters();
-          if (!params.encodings || params.encodings.length === 0) {
-            params.encodings = [{}];
+          const sender = pc.addTrack(screenVideoTrack, state.screenStream);
+
+          // Configure targeted profile bitrate
+          try {
+            const params = sender.getParameters();
+            if (!params.encodings || params.encodings.length === 0) {
+              params.encodings = [{}];
+            }
+            params.encodings[0].maxBitrate = profile.bitrate;
+            params.encodings[0].maxFramerate = profile.frameRate;
+            params.encodings[0].scaleResolutionDownBy = 1.0;
+            params.degradationPreference = 'maintain-framerate';
+            sender.setParameters(params).catch(e => console.warn(e));
+          } catch (e) {
+            console.warn('Falha ao configurar bitrate para a transmissão', e);
           }
-          params.encodings[0].maxBitrate = profile.bitrate;
-          params.encodings[0].maxFramerate = profile.frameRate;
-          params.encodings[0].scaleResolutionDownBy = 1.0;
-          params.degradationPreference = 'maintain-framerate';
-          sender.setParameters(params).catch(e => console.warn(e));
-        } catch (e) {
-          console.warn('Falha ao configurar bitrate para a transmissão', e);
-        }
 
-        // Prioritize hardware H.264 codec
-        try {
-          const transceivers = pc.getTransceivers();
-          const videoTransceiver = transceivers.find(t => t.sender === sender);
-          if (videoTransceiver && typeof RTCRtpReceiver !== 'undefined' && RTCRtpReceiver.getCapabilities) {
-            const capabilities = RTCRtpReceiver.getCapabilities('video');
-            if (capabilities && capabilities.codecs) {
-              const h264Codecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() === 'video/h264');
-              if (h264Codecs.length > 0) {
-                const otherCodecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() !== 'video/h264');
-                videoTransceiver.setCodecPreferences([...h264Codecs, ...otherCodecs]);
+          // Prioritize hardware H.264 codec
+          try {
+            const transceivers = pc.getTransceivers();
+            const videoTransceiver = transceivers.find(t => t.sender === sender);
+            if (videoTransceiver && typeof RTCRtpReceiver !== 'undefined' && RTCRtpReceiver.getCapabilities) {
+              const capabilities = RTCRtpReceiver.getCapabilities('video');
+              if (capabilities && capabilities.codecs) {
+                const h264Codecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() === 'video/h264');
+                if (h264Codecs.length > 0) {
+                  const otherCodecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() !== 'video/h264');
+                  videoTransceiver.setCodecPreferences([...h264Codecs, ...otherCodecs]);
+                }
               }
             }
+          } catch (e) {
+            console.warn('Falha ao tentar forçar codec H.264', e);
           }
-        } catch (e) {
-          console.warn('Falha ao tentar forçar codec H.264', e);
+        } catch (trackErr) {
+          console.warn('Erro ao adicionar vídeo para peer:', userId, trackErr);
         }
       }
 
       if (screenAudioTrack) {
-        pc.addTrack(screenAudioTrack, state.screenStream);
+        try {
+          pc.addTrack(screenAudioTrack, state.screenStream);
+        } catch (audioErr) {
+          console.warn('Erro ao adicionar áudio de tela para peer:', userId, audioErr);
+        }
       }
     }
 
