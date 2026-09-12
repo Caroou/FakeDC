@@ -150,11 +150,19 @@ export function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially =
   }
 
   const videoEl = document.getElementById(`video-${mediaId}`);
-  if (videoEl && videoEl.srcObject !== stream) {
-    videoEl.srcObject = stream;
-    if (stream) {
-      videoEl.play().catch(e => console.warn('Autoplay preventions:', e));
+  if (videoEl) {
+    if (videoEl.srcObject !== stream) {
+      videoEl.srcObject = stream;
+      if (stream) {
+        videoEl.play().catch(e => console.warn('Autoplay preventions:', e));
+      }
     }
+    videoEl.style.display = hasVideo ? 'block' : 'none';
+  }
+
+  const avatarEl = containerEl.querySelector('.w-24.h-24');
+  if (avatarEl) {
+    avatarEl.style.display = hasVideo ? 'none' : 'flex';
   }
 }
 

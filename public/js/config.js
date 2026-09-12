@@ -9,15 +9,14 @@ export const ICE_SERVERS = {
 export const isDesktopApp = () =>
   typeof window !== 'undefined' && Boolean(window.desktopApp?.isDesktop);
 
-// Quality profiles tuned for crisp gaming clarity without blur or lag
+// Quality profiles tuned for crisp clarity and smooth motion
 export const QUALITY_PROFILES = {
   '720p30': {
     id: '720p30',
     width: 1280,
     height: 720,
     frameRate: 30,
-    bitrate: 3000000, // 3.0 Mbps
-    minBitrateKbps: 2000,
+    bitrate: 3500000, // 3.5 Mbps
     label: '720p 30 FPS'
   },
   '720p60': {
@@ -26,7 +25,6 @@ export const QUALITY_PROFILES = {
     height: 720,
     frameRate: 60,
     bitrate: 6000000, // 6.0 Mbps
-    minBitrateKbps: 4000,
     label: '720p 60 FPS'
   },
   '1080p30': {
@@ -34,8 +32,7 @@ export const QUALITY_PROFILES = {
     width: 1920,
     height: 1080,
     frameRate: 30,
-    bitrate: 6500000, // 6.5 Mbps
-    minBitrateKbps: 4500,
+    bitrate: 6000000, // 6.0 Mbps
     label: '1080p 30 FPS'
   },
   '1080p60': {
@@ -43,8 +40,7 @@ export const QUALITY_PROFILES = {
     width: 1920,
     height: 1080,
     frameRate: 60,
-    bitrate: 10000000, // 10.0 Mbps (Discord Nitro benchmark for sharp 1080p60 motion)
-    minBitrateKbps: 7000,
+    bitrate: 10000000, // 10.0 Mbps
     label: '1080p 60 FPS'
   }
 };

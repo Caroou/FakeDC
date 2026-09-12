@@ -113,15 +113,19 @@ ipcMain.handle('get-sources', async () => {
 // User selected a specific screen or window from the modal
 ipcMain.handle('select-source', async (event, sourceId) => {
   if (pendingMediaCallback) {
+    const cb = pendingMediaCallback;
+    pendingMediaCallback = null;
     try {
       const sources = await desktopCapturer.getSources({ types: ['screen', 'window'] });
       const chosenSource = sources.find((s) => s.id === sourceId) || sources[0];
-      pendingMediaCallback({ video: chosenSource, audio: 'loopback' });
+      if (chosenSource) {
+        cb({ video: chosenSource, audio: 'loopback' });
+      } else {
+        cb({});
+      }
     } catch (err) {
       console.error('[FakeDC Desktop] Erro ao selecionar fonte:', err);
-      pendingMediaCallback({});
-    } finally {
-      pendingMediaCallback = null;
+      cb({});
     }
   }
 });

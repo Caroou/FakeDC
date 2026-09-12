@@ -176,6 +176,8 @@ export function initScreenPicker() {
   if (window.desktopApp?.onOpenScreenPicker) {
     window.desktopApp.onOpenScreenPicker(async () => {
       try {
+        if (tabScreens) tabScreens.style.display = '';
+        if (tabWindows) tabWindows.style.display = '';
         currentSources = await window.desktopApp.getSources();
         modal.classList.remove('hidden-section');
         setTab('screens');

@@ -76,21 +76,36 @@ export async function startScreenSharing() {
   const profile = getProfile(state.selectedQuality);
 
   try {
-    state.screenStream = await navigator.mediaDevices.getDisplayMedia(
-      getScreenConstraints(state.selectedQuality)
-    );
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getDisplayMedia(
+        getScreenConstraints(state.selectedQuality)
+      );
+    } catch (mediaErr) {
+      if (mediaErr.name === 'NotAllowedError' || mediaErr.name === 'AbortError') {
+        throw mediaErr;
+      }
+      console.warn('Falha ao capturar com áudio, tentando apenas vídeo:', mediaErr);
+      const constraints = getScreenConstraints(state.selectedQuality);
+      stream = await navigator.mediaDevices.getDisplayMedia({
+        video: constraints.video,
+        audio: false
+      });
+    }
+
+    state.screenStream = stream;
 
     if (screenShareBtn) {
       screenShareBtn.classList.remove('text-zinc-300', 'hover:bg-zinc-600');
       screenShareBtn.classList.add('text-white', 'bg-discord-green', 'hover:bg-green-600');
+      screenShareBtn.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        Parar Transmissão
+      `;
     }
 
     const screenVideoTrack = state.screenStream.getVideoTracks()[0];
     const screenAudioTrack = state.screenStream.getAudioTracks()[0];
-
-    if (screenVideoTrack) {
-      screenVideoTrack.contentHint = 'detail';
-    }
 
     for (const userId in state.peers) {
       const { pc } = state.peers[userId];
@@ -98,20 +113,20 @@ export async function startScreenSharing() {
       if (screenVideoTrack) {
         const sender = pc.addTrack(screenVideoTrack, state.screenStream);
 
-        // Configure targeted profile bitrate and strict resolution preservation
+        // Configure targeted profile bitrate
         try {
           const params = sender.getParameters();
           if (!params.encodings) params.encodings = [{}];
           params.encodings[0].maxBitrate = profile.bitrate;
-          params.encodings[0].scaleResolutionDownBy = 1.0;
-          params.encodings[0].maxFramerate = profile.frameRate;
-          params.degradationPreference = 'maintain-resolution';
+          if (profile.frameRate) {
+            params.encodings[0].maxFramerate = profile.frameRate;
+          }
           sender.setParameters(params).catch(e => console.warn(e));
         } catch (e) {
           console.warn('Falha ao configurar bitrate para a transmissão', e);
         }
 
-        // Prioritize hardware H.264 High Profile codec
+        // Prioritize hardware H.264 codec
         try {
           const transceivers = pc.getTransceivers();
           const videoTransceiver = transceivers.find(t => t.sender === sender);
@@ -119,13 +134,10 @@ export async function startScreenSharing() {
             const capabilities = RTCRtpReceiver.getCapabilities('video');
             if (capabilities && capabilities.codecs) {
               const h264Codecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() === 'video/h264');
-              const h264High = h264Codecs.filter(c => c.sdpFmtpLine?.includes('profile-level-id=6400'));
-              const h264Main = h264Codecs.filter(c => c.sdpFmtpLine?.includes('profile-level-id=4d00'));
-              const h264Rest = h264Codecs.filter(c => !c.sdpFmtpLine?.includes('profile-level-id=6400') && !c.sdpFmtpLine?.includes('profile-level-id=4d00'));
-              const sortedH264 = [...h264High, ...h264Main, ...h264Rest];
-
-              const otherCodecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() !== 'video/h264');
-              videoTransceiver.setCodecPreferences([...sortedH264, ...otherCodecs]);
+              if (h264Codecs.length > 0) {
+                const otherCodecs = capabilities.codecs.filter(c => c.mimeType.toLowerCase() !== 'video/h264');
+                videoTransceiver.setCodecPreferences([...h264Codecs, ...otherCodecs]);
+              }
             }
           }
         } catch (e) {
@@ -147,7 +159,19 @@ export async function startScreenSharing() {
     addRemoteMedia('local-screen', localPreviewStream, `${state.username} (Você)`);
 
   } catch (err) {
-    console.error('Error sharing screen', err);
+    if (err.name !== 'NotAllowedError' && err.name !== 'AbortError') {
+      console.error('Error sharing screen', err);
+      showToast('Não foi possível iniciar o compartilhamento de tela.', 'error');
+    }
+    if (screenShareBtn) {
+      screenShareBtn.classList.add('text-zinc-300', 'hover:bg-zinc-600');
+      screenShareBtn.classList.remove('text-white', 'bg-discord-green', 'hover:bg-green-600');
+      const profile = getProfile(state.selectedQuality);
+      screenShareBtn.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+        ${profile.label}
+      `;
+    }
   }
 }
 
@@ -174,6 +198,11 @@ export function stopScreenSharing() {
     if (screenShareBtn) {
       screenShareBtn.classList.add('text-zinc-300', 'hover:bg-zinc-600');
       screenShareBtn.classList.remove('text-white', 'bg-discord-green', 'hover:bg-green-600');
+      const profile = getProfile(state.selectedQuality);
+      screenShareBtn.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+        ${profile.label}
+      `;
     }
 
     const localScreen = document.getElementById('media-local-screen');
