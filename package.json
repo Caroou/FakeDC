@@ -1,5 +1,5 @@
 {
-  "name": "fakedc",
+  "name": "faketz",
   "version": "1.0.0",
   "description": "Uma aplicação WebRTC estilo Discord para chamadas de voz e tela P2P",
   "main": "desktop/main.js",
@@ -18,8 +18,8 @@
     "electron-builder": "^25.1.8"
   },
   "build": {
-    "appId": "com.fakedc.app",
-    "productName": "FakeDC",
+    "appId": "com.faketz.app",
+    "productName": "FakeTz",
     "directories": {
       "output": "dist"
     },

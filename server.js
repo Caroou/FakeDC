@@ -12,5 +12,5 @@ const io = new Server(server);
 initSocketServer(io);
 
 server.listen(config.PORT, () => {
-  console.log(`Servidor FakeDC rodando na porta ${config.PORT}`);
+  console.log(`Servidor FakeTz rodando na porta ${config.PORT}`);
 });

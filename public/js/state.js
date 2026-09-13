@@ -1,4 +1,4 @@
-// Centralized state container for the FakeDC application
+// Centralized state container for the FakeTz application
 export const state = {
   socket: null,
   roomId: '',
