@@ -19,7 +19,7 @@
   },
   "build": {
     "appId": "com.faketz.app",
-    "productName": "FakeTz",
+    "productName": "Faketz",
     "directories": {
       "output": "dist"
     },

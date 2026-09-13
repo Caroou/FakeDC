@@ -11,7 +11,7 @@ const initSocketServer = require('../src/socket');
 const instanceArg = process.argv.find((arg) => arg.startsWith('--instance='));
 if (instanceArg) {
   const instanceId = instanceArg.split('=')[1];
-  const customUserData = path.join(app.getPath('appData'), `FakeTz-Instance-${instanceId}`);
+  const customUserData = path.join(app.getPath('appData'), `Faketz-Instance-${instanceId}`);
   app.setPath('userData', customUserData);
 }
 
@@ -52,16 +52,16 @@ function startEmbeddedServer() {
 
     embeddedServer.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
-        console.log(`[FakeTz Desktop] Servidor externo já detectado na porta ${config.PORT}`);
+        console.log(`[Faketz Desktop] Servidor externo já detectado na porta ${config.PORT}`);
         resolve();
       } else {
-        console.error('[FakeTz Desktop] Erro no servidor:', err);
+        console.error('[Faketz Desktop] Erro no servidor:', err);
         resolve();
       }
     });
 
     embeddedServer.listen(config.PORT, () => {
-      console.log(`[FakeTz Desktop] Servidor integrado ativo na porta ${config.PORT}`);
+      console.log(`[Faketz Desktop] Servidor integrado ativo na porta ${config.PORT}`);
       resolve();
     });
   });
@@ -73,7 +73,7 @@ function createWindow() {
     height: 760,
     minWidth: 960,
     minHeight: 600,
-    title: `FakeTz - Desktop Gaming Edition${openWindows.size > 0 ? ` (Janela ${openWindows.size + 1})` : ''}`,
+    title: `Faketz - Desktop Gaming Edition${openWindows.size > 0 ? ` (Janela ${openWindows.size + 1})` : ''}`,
     backgroundColor: '#1e1f22',
     autoHideMenuBar: true,
     show: false,
@@ -129,7 +129,7 @@ ipcMain.handle('get-sources', async () => {
       isScreen: s.id.startsWith('screen:')
     }));
   } catch (err) {
-    console.error('[FakeTz Desktop] Erro ao obter fontes:', err);
+    console.error('[Faketz Desktop] Erro ao obter fontes:', err);
     return [];
   }
 });
@@ -148,7 +148,7 @@ ipcMain.handle('select-source', async (event, sourceId) => {
         cb({});
       }
     } catch (err) {
-      console.error('[FakeTz Desktop] Erro ao selecionar fonte:', err);
+      console.error('[Faketz Desktop] Erro ao selecionar fonte:', err);
       cb({});
     }
   }
@@ -201,7 +201,7 @@ app.whenReady().then(async () => {
         pendingMediaCallback = null;
       }
     } catch (err) {
-      console.error('[FakeTz Desktop] Erro ao iniciar compartilhamento de tela:', err);
+      console.error('[Faketz Desktop] Erro ao iniciar compartilhamento de tela:', err);
       callback({});
       pendingMediaCallback = null;
     }

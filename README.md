@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="https://cdn-icons-png.flaticon.com/256/2111/2111370.png" width="100" alt="FakeTz Logo">
-  <h1>FakeTz</h1>
+  <img src="https://cdn-icons-png.flaticon.com/256/2111/2111370.png" width="100" alt="Faketz Logo">
+  <h1>Faketz</h1>
   <p><b>Chamadas de voz e compartilhamento de tela de altíssima qualidade (1080p 60fps).</b></p>
 </div>
 
@@ -16,7 +16,7 @@ Um clone simplificado e levíssimo focado no que importa: transmissão de tela f
 ## 📥 Instalação
 
 ### Usando o Aplicativo Desktop (Recomendado para 60 FPS)
-Baixe a versão mais recente em [Releases](https://github.com/Caroou/FakeTz/releases/download/setup/FakeTz.Setup.1.0.0.exe) e instale no Windows.
+Baixe a versão mais recente em [Releases](https://github.com/Caroou/Faketz/releases/download/setup/Faketz.Setup.1.0.0.exe) e instale no Windows.
 
 ### Rodando o Servidor (Desenvolvimento)
 1. Instale as dependências: `npm install`
