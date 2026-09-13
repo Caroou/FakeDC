@@ -26,7 +26,7 @@ Baixe a versão mais recente em [Releases](https://github.com/Caroou/Faketz/rele
 Para compilar o aplicativo para o Windows a partir do código fonte:
 ```bash
 # Abra o terminal como Administrador
-npm run build
+npm run build:exe
 ```
 O executável será gerado na pasta `dist/`.
 
