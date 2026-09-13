@@ -24,7 +24,7 @@ export function initScreenPicker() {
       const q = btn.getAttribute('data-quality');
       if (q === state.selectedQuality) {
         btn.className =
-          'quality-btn py-2 px-3 rounded-xl text-xs font-semibold border transition-all text-white bg-discord-blurple/20 border-discord-blurple shadow-sm text-center';
+          'quality-btn py-2 px-3 rounded-xl text-xs font-semibold border transition-all text-white bg-faketz-accent/20 border-faketz-accent shadow-sm text-center';
       } else {
         btn.className =
           'quality-btn py-2 px-3 rounded-xl text-xs font-semibold border transition-all text-zinc-400 border-zinc-700/60 hover:text-white hover:border-zinc-500 text-center';
@@ -95,7 +95,7 @@ export function initScreenPicker() {
       // In standard web browser, explain that the browser will open the permission picker
       grid.innerHTML = `
         <div class="col-span-2 py-8 px-4 text-center text-zinc-300 text-sm flex flex-col items-center justify-center gap-3">
-          <div class="w-12 h-12 rounded-full bg-discord-blurple/10 flex items-center justify-center text-discord-blurple">
+          <div class="w-12 h-12 rounded-full bg-faketz-accent/10 flex items-center justify-center text-faketz-accent">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
           </div>
           <p class="font-semibold text-white">Escolha o Perfil de Qualidade</p>
@@ -130,9 +130,9 @@ export function initScreenPicker() {
     filtered.forEach((source) => {
       const isSelected = source.id === selectedSourceId;
       const card = document.createElement('div');
-      card.className = `cursor-pointer rounded-xl overflow-hidden border-2 transition-all p-2 flex flex-col gap-2 bg-discord-main/60 hover:bg-discord-main ${
+      card.className = `cursor-pointer rounded-xl overflow-hidden border-2 transition-all p-2 flex flex-col gap-2 bg-faketz-main/60 hover:bg-faketz-main ${
         isSelected
-          ? 'border-discord-blurple ring-2 ring-discord-blurple/50 shadow-lg shadow-discord-blurple/20'
+          ? 'border-faketz-accent ring-2 ring-faketz-accent/50 shadow-lg shadow-faketz-accent/20'
           : 'border-transparent hover:border-zinc-700'
       }`;
 
@@ -164,12 +164,12 @@ export function initScreenPicker() {
     if (tabScreens && tabWindows) {
       if (tab === 'screens') {
         tabScreens.className =
-          'pb-3 text-sm font-semibold border-b-2 border-discord-blurple text-white transition-colors';
+          'pb-3 text-sm font-semibold border-b-2 border-faketz-accent text-white transition-colors';
         tabWindows.className =
           'pb-3 text-sm font-semibold border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors';
       } else {
         tabWindows.className =
-          'pb-3 text-sm font-semibold border-b-2 border-discord-blurple text-white transition-colors';
+          'pb-3 text-sm font-semibold border-b-2 border-faketz-accent text-white transition-colors';
         tabScreens.className =
           'pb-3 text-sm font-semibold border-b-2 border-transparent text-zinc-400 hover:text-zinc-200 transition-colors';
       }
@@ -228,7 +228,7 @@ export function openWebQualityModal() {
 
   grid.innerHTML = `
     <div class="col-span-2 py-8 px-4 text-center text-zinc-300 text-sm flex flex-col items-center justify-center gap-3">
-      <div class="w-12 h-12 rounded-full bg-discord-blurple/10 flex items-center justify-center text-discord-blurple">
+      <div class="w-12 h-12 rounded-full bg-faketz-accent/10 flex items-center justify-center text-faketz-accent">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
       </div>
       <p class="font-semibold text-white">Escolha o Perfil de Qualidade</p>

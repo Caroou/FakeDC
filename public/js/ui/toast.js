@@ -4,7 +4,7 @@ export function showToast(message, type = 'error') {
   if (!container) return;
 
   const toast = document.createElement('div');
-  const bgColor = type === 'error' ? 'bg-discord-red' : 'bg-discord-green';
+  const bgColor = type === 'error' ? 'bg-faketz-red' : 'bg-faketz-green';
 
   toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 transform transition-all duration-300 translate-x-full opacity-0 pointer-events-auto max-w-sm`;
 

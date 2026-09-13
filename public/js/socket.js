@@ -19,9 +19,9 @@ export function initSocketClient() {
     const dot = document.getElementById('connection-status-dot');
     const text = document.getElementById('connection-status-text');
 
-    if (dot) dot.className = 'w-2 h-2 rounded-full bg-discord-green animate-pulse';
+    if (dot) dot.className = 'w-2 h-2 rounded-full bg-faketz-green animate-pulse';
     if (text) {
-      text.className = 'text-xs font-semibold text-discord-green';
+      text.className = 'text-xs font-semibold text-faketz-green';
       text.innerText = 'Conectado';
     }
 

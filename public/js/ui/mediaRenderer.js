@@ -10,7 +10,7 @@ export function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially =
   if (!containerEl) {
     containerEl = document.createElement('div');
     containerEl.id = `media-${mediaId}`;
-    containerEl.className = 'media-container group relative bg-discord-secondary rounded-2xl overflow-hidden flex items-center justify-center cursor-pointer transition-all duration-300 ring-2 ring-transparent shadow-xl shrink-0 border border-white/5';
+    containerEl.className = 'media-container group relative bg-faketz-secondary rounded-2xl overflow-hidden flex items-center justify-center cursor-pointer transition-all duration-300 ring-2 ring-transparent shadow-xl shrink-0 border border-white/5';
     containerEl.style.flex = '1 1 200px';
     containerEl.style.maxWidth = '100%';
     containerEl.style.aspectRatio = '16/9';
@@ -67,14 +67,14 @@ export function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially =
     labelEl.innerText = hasVideo ? `${peerUsername} (Tela)` : peerUsername;
 
     const avatarEl = document.createElement('div');
-    avatarEl.className = 'absolute inset-0 m-auto w-24 h-24 rounded-full bg-gradient-to-br from-discord-blurple to-discord-blurpleHover text-white text-3xl font-bold flex items-center justify-center z-0 shadow-2xl pointer-events-none border-4 border-discord-main/50';
+    avatarEl.className = 'absolute inset-0 m-auto w-24 h-24 rounded-full bg-gradient-to-br from-faketz-accent to-faketz-accentHover text-white text-3xl font-bold flex items-center justify-center z-0 shadow-2xl pointer-events-none border-4 border-faketz-main/50';
     avatarEl.innerText = (peerUsername || '?').charAt(0).toUpperCase();
     avatarEl.style.display = hasVideo ? 'none' : 'flex';
 
     // Mute indicator for voice/spectator tiles
     const muteInd = document.createElement('div');
     muteInd.id = `mute-indicator-${mediaId}`;
-    muteInd.className = 'absolute bottom-3 right-3 bg-discord-red text-white w-8 h-8 rounded-full flex items-center justify-center z-10 shadow-lg border-2 border-discord-secondary';
+    muteInd.className = 'absolute bottom-3 right-3 bg-faketz-red text-white w-8 h-8 rounded-full flex items-center justify-center z-10 shadow-lg border-2 border-faketz-secondary';
     muteInd.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line></svg>';
     muteInd.style.display = (!hasVideo && isMutedInitially) ? 'flex' : 'none';
 
@@ -91,10 +91,10 @@ export function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially =
       volSlider.step = 0.01;
       volSlider.value = 1;
       volSlider.title = 'Volume';
-      volSlider.className = 'w-16 accent-discord-blurple cursor-pointer';
+      volSlider.className = 'w-16 accent-faketz-accent cursor-pointer';
 
       const muteBtn = document.createElement('button');
-      muteBtn.className = 'text-white p-1.5 rounded-lg bg-discord-red hover:bg-red-600 transition-colors shadow-sm';
+      muteBtn.className = 'text-white p-1.5 rounded-lg bg-faketz-red hover:bg-red-600 transition-colors shadow-sm';
       muteBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>';
 
       const fsBtn = document.createElement('button');
@@ -106,11 +106,11 @@ export function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially =
         videoEl.volume = e.target.value;
         if (videoEl.volume == 0) {
           muteBtn.classList.remove('bg-zinc-600', 'hover:bg-zinc-500');
-          muteBtn.classList.add('bg-discord-red', 'hover:bg-red-600');
+          muteBtn.classList.add('bg-faketz-red', 'hover:bg-red-600');
         } else if (videoEl.muted) {
           videoEl.muted = false;
           muteBtn.classList.add('bg-zinc-600', 'hover:bg-zinc-500');
-          muteBtn.classList.remove('bg-discord-red', 'hover:bg-red-600');
+          muteBtn.classList.remove('bg-faketz-red', 'hover:bg-red-600');
         }
       });
 
@@ -118,10 +118,10 @@ export function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially =
         videoEl.muted = !videoEl.muted;
         if (videoEl.muted) {
           muteBtn.classList.remove('bg-zinc-600', 'hover:bg-zinc-500');
-          muteBtn.classList.add('bg-discord-red', 'hover:bg-red-600');
+          muteBtn.classList.add('bg-faketz-red', 'hover:bg-red-600');
         } else {
           muteBtn.classList.add('bg-zinc-600', 'hover:bg-zinc-500');
-          muteBtn.classList.remove('bg-discord-red', 'hover:bg-red-600');
+          muteBtn.classList.remove('bg-faketz-red', 'hover:bg-red-600');
           if (volSlider.value == 0) {
             volSlider.value = 0.5;
             videoEl.volume = 0.5;

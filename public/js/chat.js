@@ -6,7 +6,7 @@ export function addMessage(user, msg) {
   if (!chatMessages) return;
 
   const div = document.createElement('div');
-  div.className = 'bg-discord-tertiary p-3 rounded-xl text-sm break-words border border-white/5 shadow-sm';
+  div.className = 'bg-faketz-tertiary p-3 rounded-xl text-sm break-words border border-white/5 shadow-sm';
 
   const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 

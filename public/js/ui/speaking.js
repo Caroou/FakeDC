@@ -33,10 +33,10 @@ export function initSpeakingDetector() {
         const mediaEl = document.getElementById(`media-${userId}`);
         if (mediaEl) {
           if (average > 10) {
-            mediaEl.classList.add('ring-discord-green');
+            mediaEl.classList.add('ring-faketz-green');
             mediaEl.classList.remove('ring-transparent');
           } else {
-            mediaEl.classList.remove('ring-discord-green');
+            mediaEl.classList.remove('ring-faketz-green');
             mediaEl.classList.add('ring-transparent');
           }
         }
