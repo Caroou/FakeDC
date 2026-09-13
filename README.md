@@ -1,5 +1,4 @@
 <div align="center">
-  <img src="https://cdn-icons-png.flaticon.com/256/2111/2111370.png" width="100" alt="Faketz Logo">
   <h1>Faketz</h1>
   <p><b>Chamadas de voz e compartilhamento de tela de altíssima qualidade (1080p 60fps).</b></p>
 </div>
