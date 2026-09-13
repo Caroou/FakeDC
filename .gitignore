@@ -4,4 +4,5 @@ node_modules/
 
 # Electron build artifacts
 dist/
-build/
+build/*
+!build/icon.png
