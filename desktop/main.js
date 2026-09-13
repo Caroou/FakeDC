@@ -100,7 +100,7 @@ function createWindow() {
   // Se o aplicativo estiver empacotado (.exe final), carrega a versão em nuvem
   // Se estiver em desenvolvimento, carrega o localhost
   if (app.isPackaged) {
-    win.loadURL('https://fakedc.onrender.com/');
+    win.loadURL('https://faketz.onrender.com/');
   } else {
     win.loadURL(`http://localhost:${config.PORT}`);
   }
