@@ -74,20 +74,50 @@ export function toggleMic() {
 }
 
 export async function toggleNoiseSuppression() {
-  if (state.localStream) {
-    const audioTrack = state.localStream.getAudioTracks()[0];
-    if (audioTrack) {
-      state.noiseSuppression = !state.noiseSuppression;
-      try {
-        await audioTrack.applyConstraints({
-          noiseSuppression: state.noiseSuppression,
-          autoGainControl: state.noiseSuppression // Also toggle auto-gain alongside noise suppression
-        });
-        updateNoiseSuppressionUI();
-      } catch (err) {
-        console.error('Falha ao alterar supressão de ruído:', err);
+  if (!state.localStream) return;
+  
+  state.noiseSuppression = !state.noiseSuppression;
+  updateNoiseSuppressionUI();
+
+  try {
+    const oldAudioTrack = state.localStream.getAudioTracks()[0];
+    
+    // Request a completely new stream to ensure browser applies hardware-level constraints
+    const newStream = await navigator.mediaDevices.getUserMedia({
+      video: false,
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: state.noiseSuppression,
+        autoGainControl: state.noiseSuppression,
+        sampleRate: 48000,
+        channelCount: 2
+      }
+    });
+
+    const newAudioTrack = newStream.getAudioTracks()[0];
+    newAudioTrack.enabled = !state.isMicMuted;
+
+    // Swap the track in our local media stream
+    if (oldAudioTrack) {
+      state.localStream.removeTrack(oldAudioTrack);
+      oldAudioTrack.stop();
+    }
+    state.localStream.addTrack(newAudioTrack);
+
+    // Swap the track in all active peer connections without interrupting the call
+    for (const userId in state.peers) {
+      const { pc } = state.peers[userId];
+      // Find the audio sender that belongs to the microphone (not the screen share)
+      const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio' && !s.track.label.includes('screen') && !s.track.label.includes('system'));
+      if (sender) {
+        sender.replaceTrack(newAudioTrack).catch(e => console.error('Erro ao substituir track de áudio:', e));
       }
     }
+  } catch (err) {
+    console.error('Falha ao reiniciar o microfone com novos filtros:', err);
+    // Revert visually if failed
+    state.noiseSuppression = !state.noiseSuppression;
+    updateNoiseSuppressionUI();
   }
 }
 
