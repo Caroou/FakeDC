@@ -102,6 +102,12 @@ export function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially =
       fsBtn.className = 'text-white p-1.5 rounded-lg bg-zinc-600 hover:bg-zinc-500 transition-colors shadow-sm';
       fsBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>';
 
+      const pipBtn = document.createElement('button');
+      pipBtn.title = 'Pop-up (Picture in Picture)';
+      pipBtn.className = 'text-white p-1.5 rounded-lg bg-zinc-600 hover:bg-zinc-500 transition-colors shadow-sm';
+      // PiP icon (two overlapping squares)
+      pipBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect><rect x="12" y="12" width="7" height="5" stroke-width="2"></rect></svg>';
+
       volSlider.addEventListener('input', (e) => {
         videoEl.volume = e.target.value;
         if (videoEl.volume == 0) {
@@ -137,6 +143,61 @@ export function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially =
         }
       });
 
+      pipBtn.addEventListener('click', () => {
+        if (document.pictureInPictureElement) {
+          document.exitPictureInPicture().catch(console.error);
+          return;
+        }
+
+        if (containerEl.pipWindow) {
+          containerEl.pipWindow.close();
+          return;
+        }
+
+        // O Electron ainda não possui suporte estável para a nova API Document PiP (ele quebra ao tentar criar a janela).
+        // Portanto, limitamos o Super Pop-up apenas para quem estiver acessando pelo navegador Chrome.
+        const canUseSuperPip = 'documentPictureInPicture' in window && !window.desktopApp?.isDesktop;
+
+        if (canUseSuperPip) {
+          const w = Math.max(400, videoEl.videoWidth || 800);
+          const h = Math.max(300, videoEl.videoHeight || 450);
+          
+          window.documentPictureInPicture.requestWindow({ width: w, height: h })
+            .then(pipWindow => {
+              containerEl.pipWindow = pipWindow;
+              pipWindow.document.body.style.margin = '0';
+              pipWindow.document.body.style.backgroundColor = 'black';
+              pipWindow.document.body.style.overflow = 'hidden';
+              pipWindow.document.body.style.display = 'flex';
+              pipWindow.document.body.style.alignItems = 'center';
+              pipWindow.document.body.style.justifyContent = 'center';
+              pipWindow.document.body.style.height = '100vh';
+              
+              pipWindow.document.body.appendChild(videoEl);
+              
+              pipWindow.addEventListener('pagehide', () => {
+                containerEl.insertBefore(videoEl, containerEl.firstChild);
+                containerEl.pipWindow = null;
+              });
+            })
+            .catch(e => {
+              console.warn('Super Pop-up falhou. O navegador web pode ter bloqueado.', e);
+            });
+        } else {
+          // Fallback garantido: PiP tradicional (com limite de tamanho imposto pelo SO)
+          if (videoEl.requestPictureInPicture) {
+            videoEl.requestPictureInPicture().catch(console.error);
+          }
+        }
+      });
+
+      pipBtn.id = `pip-btn-${mediaId}`;
+      fsBtn.id = `fs-btn-${mediaId}`;
+
+      // Mostrar botão se tiver PiP ou Super PiP disponível
+      if (document.pictureInPictureEnabled || 'documentPictureInPicture' in window) {
+        overlay.appendChild(pipBtn);
+      }
       overlay.appendChild(volSlider);
       overlay.appendChild(muteBtn);
       overlay.appendChild(fsBtn);
@@ -149,6 +210,12 @@ export function addRemoteMedia(mediaId, stream, peerUsername, isMutedInitially =
     if (!hasVideo) containerEl.appendChild(muteInd);
     videoGrid.appendChild(containerEl);
   }
+
+  // Update visibility of PiP and Fullscreen buttons dynamically
+  const pipBtn = document.getElementById(`pip-btn-${mediaId}`);
+  const fsBtn = document.getElementById(`fs-btn-${mediaId}`);
+  if (pipBtn) pipBtn.style.display = hasVideo ? 'block' : 'none';
+  if (fsBtn) fsBtn.style.display = hasVideo ? 'block' : 'none';
 
   const videoEl = document.getElementById(`video-${mediaId}`);
   if (videoEl) {
@@ -173,6 +240,9 @@ export function updateMediaVisibility(mediaId, stream) {
   if (containerEl && stream) {
     const hasAnyTrack = stream.getTracks().length > 0;
     if (!hasAnyTrack) {
+      if (containerEl.pipWindow) {
+        containerEl.pipWindow.close();
+      }
       if (containerEl.classList.contains('focused') && videoGrid) {
         videoGrid.classList.remove('p-0', 'gap-0', 'content-stretch', 'items-stretch');
         videoGrid.classList.add('p-4', 'gap-4', 'content-start');
@@ -194,6 +264,9 @@ export function removeVideo(userId) {
 
   elements.forEach(el => {
     if (el) {
+      if (el.pipWindow) {
+        el.pipWindow.close();
+      }
       if (el.classList.contains('focused') && videoGrid) {
         videoGrid.classList.remove('p-0', 'gap-0', 'content-stretch', 'items-stretch');
         videoGrid.classList.add('p-4', 'gap-4', 'content-start');

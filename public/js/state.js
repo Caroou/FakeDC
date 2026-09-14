@@ -1,4 +1,5 @@
 // Centralized state container for the Faketz application
+// Centralized state container for the Faketz application
 export const state = {
   socket: null,
   roomId: '',
@@ -6,7 +7,7 @@ export const state = {
   localStream: null,
   screenStream: null,
   isMicMuted: false,
-  noiseSuppression: false,
+  noiseSuppression: true,
   currentTab: 'join',
   chatCryptoKey: null,
   isConnecting: false,

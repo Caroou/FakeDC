@@ -12,10 +12,12 @@ export async function initMedia() {
       video: false, 
       audio: {
         echoCancellation: true,      // Keep echo cancellation to prevent feedback loops
-        noiseSuppression: false,     // Disable noise suppression to stop muffled/robotic voice
+        noiseSuppression: state.noiseSuppression,
         autoGainControl: true        // Enable auto gain so the mic volume is normalized
       } 
     });
+
+    updateNoiseSuppressionUI();
 
     if (globalMutedCheckbox && globalMutedCheckbox.checked) {
       const audioTrack = state.localStream.getAudioTracks()[0];

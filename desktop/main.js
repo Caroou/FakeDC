@@ -105,6 +105,18 @@ function createWindow() {
     win.loadURL(`http://localhost:${config.PORT}`);
   }
 
+  win.webContents.setWindowOpenHandler((details) => {
+    // Permitir a abertura de janelas do Document Picture-in-Picture
+    return {
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        autoHideMenuBar: true,
+        backgroundColor: '#000000',
+        alwaysOnTop: true
+      }
+    };
+  });
+
   win.on('closed', () => {
     openWindows.delete(win);
   });
