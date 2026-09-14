@@ -7,10 +7,11 @@ Um clone simplificado e levíssimo focado no que importa: transmissão de tela f
 
 ## ✨ Destaques
 
-- 🚀 **Aplicativo Desktop Dedicado:** Feito com Electron, o `.exe` nativo burla as limitações de economia de energia dos navegadores para entregar compartilhamento de tela cravado em **60 FPS constantes**, ideal para jogos e vídeos.
-- 📺 **Qualidade "Nitro" Gratuita:** SDP modificado para injetar bitrate máximo no WebRTC, forçando a transmissão a começar em alta definição sem demora.
-- 🎨 **Design Moderno:** Interface polida (Tailwind CSS) com detecção dinâmica de voz, modo cinema imersivo e métricas de rede em tempo real.
-- 🔒 **Leve e Seguro:** As transmissões de vídeo são P2P (ponto a ponto). Seu vídeo viaja criptografado direto para seus amigos sem pesar no servidor.
+- 🚀 **Aplicativo Desktop Dedicado:** Feito com Electron, o `.exe` nativo burla as limitações de energia dos navegadores para entregar compartilhamento cravado em **60 FPS**, ideal para jogos.
+- 📺 **Qualidade "Nitro" Gratuita:** SDP modificado para forçar taxa de bits máxima.
+- 🎙️ **Áudio de Estúdio & Cancelamento de Eco:** Ganho automático nativo ativado para equalizar os volumes, com opção rápida para ligar/desligar o Filtro de Ruído a qualquer momento. Um supressor de loopback isola a voz dos amigos, impedindo microfonia (eco) nas transmissões de tela.
+- 🖼️ **Pop-up Flutuante (Picture-in-Picture):** Assista às telas dos seus amigos em uma mini-janela flutuante por cima dos seus jogos ou trabalho.
+- 🎨 **Design Moderno:** Interface polida (Tailwind CSS) com deteção dinâmica de voz e métricas de rede em tempo real.
 
 ## 📥 Instalação
 
