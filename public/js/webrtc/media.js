@@ -8,7 +8,16 @@ export async function initMedia() {
   const globalMutedCheckbox = document.getElementById('global-muted-checkbox');
 
   try {
-    state.localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+    state.localStream = await navigator.mediaDevices.getUserMedia({ 
+      video: false, 
+      audio: {
+        echoCancellation: true,      // Keep echo cancellation to prevent feedback loops
+        noiseSuppression: false,     // Disable noise suppression to stop muffled/robotic voice
+        autoGainControl: false,      // Disable auto gain so it doesn't arbitrarily lower mic volume
+        sampleRate: 48000,
+        channelCount: 2
+      } 
+    });
 
     if (globalMutedCheckbox && globalMutedCheckbox.checked) {
       const audioTrack = state.localStream.getAudioTracks()[0];

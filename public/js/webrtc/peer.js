@@ -32,53 +32,60 @@ export function configureFastCodecs(videoTransceiver) {
 
 export function applyBitrateToSdp(sdp, profile) {
   if (!sdp) return sdp;
-  const kbps = Math.floor(profile.bitrate / 1000);
-  const bps = profile.bitrate;
-  const minKbps = profile.minBitrateKbps || Math.floor(kbps * 0.5);
-  const startKbps = profile.startBitrateKbps || Math.floor(kbps * 0.75);
-
   let result = sdp;
 
-  // 1. Force b=AS (kbps) and b=TIAS (bps) under m=video (placed after c= line per RFC 4566)
-  if (result.includes('b=AS:')) {
-    result = result.replace(/b=AS:\d+/g, `b=AS:${kbps}`);
-  } else if (result.includes('c=IN')) {
-    result = result.replace(/(c=IN[^\r\n]*(?:\r?\n))/g, (match, line) => `${line}b=AS:${kbps}\r\n`);
-  } else {
-    result = result.replace(/(m=video[^\r\n]*(?:\r?\n))/g, (match, line) => `${line}b=AS:${kbps}\r\n`);
+  if (profile) {
+    const kbps = Math.floor(profile.bitrate / 1000);
+    const bps = profile.bitrate;
+    const minKbps = profile.minBitrateKbps || Math.floor(kbps * 0.5);
+    const startKbps = profile.startBitrateKbps || Math.floor(kbps * 0.75);
+
+    if (result.includes('b=AS:')) {
+      result = result.replace(/b=AS:\d+/g, "b=AS:" + kbps);
+    } else if (result.includes('c=IN')) {
+      result = result.replace(/(c=IN[^\r\n]*(?:\r?\n))/g, (match, line) => line + 'b=AS:' + kbps + '\r\n');
+    } else {
+      result = result.replace(/(m=video[^\r\n]*(?:\r?\n))/g, (match, line) => line + 'b=AS:' + kbps + '\r\n');
+    }
+
+    if (result.includes('b=TIAS:')) {
+      result = result.replace(/b=TIAS:\d+/g, 'b=TIAS:' + bps);
+    } else {
+      result = result.replace(/(b=AS:\d+[^\r\n]*(?:\r?\n))/g, (match, line) => line + 'b=TIAS:' + bps + '\r\n');
+    }
+
+    const googleBwe = 'x-google-min-bitrate=' + minKbps + ';x-google-start-bitrate=' + startKbps + ';x-google-max-bitrate=' + kbps;
+
+    const videoMatch = result.match(/m=video\s+\d+\s+[\w/]+\s+([\d\s]+)/);
+    const videoPayloads = videoMatch ? videoMatch[1].trim().split(/\s+/) : [];
+
+    result = result.replace(/(a=fmtp:\d+)(?!.*apt=)(.*)(\r?\n)/g, (match, prefix, rest, eol) => {
+      if (rest.includes('x-google-min-bitrate')) return match;
+      const trimmed = rest.trim();
+      const separator = (trimmed === '' || trimmed.endsWith(';')) ? '' : ';';
+      return prefix + rest + separator + googleBwe + eol;
+    });
+
+    videoPayloads.forEach((pt) => {
+      const fmtpRegex = new RegExp('a=fmtp:' + pt + '\\b');
+      const rtpmapRegex = new RegExp('(a=rtpmap:' + pt + '\\s+[^\r\n]+(?:\r?\n))');
+      if (!fmtpRegex.test(result) && rtpmapRegex.test(result)) {
+        result = result.replace(rtpmapRegex, '$1a=fmtp:' + pt + ' ' + googleBwe + '\r\n');
+      }
+    });
   }
 
-  if (result.includes('b=TIAS:')) {
-    result = result.replace(/b=TIAS:\d+/g, `b=TIAS:${bps}`);
-  } else {
-    result = result.replace(/(b=AS:\d+[^\r\n]*(?:\r?\n))/g, (match, line) => `${line}b=TIAS:${bps}\r\n`);
+  const opusRegex = /a=rtpmap:(\d+) opus\/48000\/2/i;
+  const opusMatch = result.match(opusRegex);
+  if (opusMatch) {
+    const opusPt = opusMatch[1];
+    const fmtpRegex = new RegExp('a=fmtp:' + opusPt + ' (.*)', 'g');
+    if (result.match(fmtpRegex)) {
+      result = result.replace(fmtpRegex, 'a=fmtp:' + opusPt + ' $1; stereo=1; sprop-stereo=1; maxaveragebitrate=128000; useinbandfec=1');
+    } else {
+      result = result.replace(opusRegex, 'a=rtpmap:' + opusPt + ' opus/48000/2\r\na=fmtp:' + opusPt + ' stereo=1; sprop-stereo=1; maxaveragebitrate=128000; useinbandfec=1');
+    }
   }
-
-  // 2. Inject Google BWE minimum, start, and max bitrates into video fmtp lines
-  const googleBwe = `x-google-min-bitrate=${minKbps};x-google-start-bitrate=${startKbps};x-google-max-bitrate=${kbps}`;
-
-  // Find all payload types in m=video
-  const videoMatch = result.match(/m=video\s+\d+\s+[\w/]+\s+([\d\s]+)/);
-  const videoPayloads = videoMatch ? videoMatch[1].trim().split(/\s+/) : [];
-
-  // Update existing fmtp lines
-  result = result.replace(/(a=fmtp:\d+)(?!.*apt=)(.*)(\r?\n)/g, (match, prefix, rest, eol) => {
-    if (rest.includes('x-google-min-bitrate')) {
-      return match;
-    }
-    const trimmed = rest.trim();
-    const separator = (trimmed === '' || trimmed.endsWith(';')) ? '' : ';';
-    return `${prefix}${rest}${separator}${googleBwe}${eol}`;
-  });
-
-  // Ensure fmtp exists for main video codecs
-  videoPayloads.forEach((pt) => {
-    const fmtpRegex = new RegExp(`a=fmtp:${pt}\\b`);
-    const rtpmapRegex = new RegExp(`(a=rtpmap:${pt}\\s+[^\r\n]+(?:\r?\n))`);
-    if (!fmtpRegex.test(result) && rtpmapRegex.test(result)) {
-      result = result.replace(rtpmapRegex, `$1a=fmtp:${pt} ${googleBwe}\r\n`);
-    }
-  });
 
   return result;
 }
@@ -107,10 +114,8 @@ export function createPeerConnection(userId, peerUsername, isMuted = false) {
       let offer = await pc.createOffer();
 
       // SDP Munging to guarantee high bitrate and instant crisp quality
-      if (state.screenStream) {
-        const profile = getProfile(state.selectedQuality);
-        offer.sdp = applyBitrateToSdp(offer.sdp, profile);
-      }
+      const profile = state.screenStream ? getProfile(state.selectedQuality) : null;
+      offer.sdp = applyBitrateToSdp(offer.sdp, profile);
 
       await pc.setLocalDescription(offer);
       state.socket.emit('signal', { to: userId, signal: pc.localDescription });
@@ -224,10 +229,9 @@ export async function handleSignal({ from, signal, username: signalUsername, isM
 
       if (signal.type === 'offer') {
         let answer = await pc.createAnswer();
-        if (state.screenStream || answer.sdp.includes('m=video')) {
-          const profile = getProfile(state.selectedQuality);
-          answer.sdp = applyBitrateToSdp(answer.sdp, profile);
-        }
+        const profile = state.screenStream ? getProfile(state.selectedQuality) : null;
+        answer.sdp = applyBitrateToSdp(answer.sdp, profile);
+        
         await pc.setLocalDescription(answer);
         state.socket.emit('signal', { to: from, signal: pc.localDescription });
       }
