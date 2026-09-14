@@ -44,6 +44,11 @@ export const getScreenConstraints = (qualityId = '1080p60') => {
       height: { ideal: profile.height },
       frameRate: { ideal: profile.frameRate, max: profile.frameRate }
     },
-    audio: true
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: false,
+      autoGainControl: false,
+      suppressLocalAudioPlayback: true
+    }
   };
 };

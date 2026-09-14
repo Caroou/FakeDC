@@ -5,7 +5,7 @@ import { initTabs } from './ui/tabs.js';
 import { initIdleDetection } from './ui/idle.js';
 import { initSpeakingDetector } from './ui/speaking.js';
 import { addRemoteMedia } from './ui/mediaRenderer.js';
-import { initMedia, toggleMic, startScreenSharing, stopScreenSharing } from './webrtc/media.js';
+import { initMedia, toggleMic, toggleNoiseSuppression, startScreenSharing, stopScreenSharing } from './webrtc/media.js';
 import { initChat } from './chat.js';
 import { initSocketClient } from './socket.js';
 import { initScreenPicker, openWebQualityModal } from './ui/screenPicker.js';
@@ -115,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Bind main action buttons
   const actionBtn = document.getElementById('action-btn');
   const micToggleBtn = document.getElementById('mic-toggle-btn');
+  const noiseSuppressionBtn = document.getElementById('noise-suppression-btn');
   const screenShareBtn = document.getElementById('screen-share-btn');
   const leaveRoomBtn = document.getElementById('leave-room-btn');
 
@@ -124,6 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (micToggleBtn) {
     micToggleBtn.addEventListener('click', toggleMic);
+  }
+
+  if (noiseSuppressionBtn) {
+    noiseSuppressionBtn.addEventListener('click', toggleNoiseSuppression);
   }
 
   if (screenShareBtn) {

@@ -6,6 +6,7 @@ export const state = {
   localStream: null,
   screenStream: null,
   isMicMuted: false,
+  noiseSuppression: false,
   currentTab: 'join',
   chatCryptoKey: null,
   isConnecting: false,

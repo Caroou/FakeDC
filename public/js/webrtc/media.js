@@ -73,6 +73,44 @@ export function toggleMic() {
   }
 }
 
+export async function toggleNoiseSuppression() {
+  if (state.localStream) {
+    const audioTrack = state.localStream.getAudioTracks()[0];
+    if (audioTrack) {
+      state.noiseSuppression = !state.noiseSuppression;
+      try {
+        await audioTrack.applyConstraints({
+          noiseSuppression: state.noiseSuppression,
+          autoGainControl: state.noiseSuppression // Also toggle auto-gain alongside noise suppression
+        });
+        updateNoiseSuppressionUI();
+      } catch (err) {
+        console.error('Falha ao alterar supressão de ruído:', err);
+      }
+    }
+  }
+}
+
+export function updateNoiseSuppressionUI() {
+  const btn = document.getElementById('noise-suppression-btn');
+  const badge = document.getElementById('noise-badge');
+  if (!btn || !badge) return;
+
+  if (state.noiseSuppression) {
+    btn.classList.add('text-white');
+    btn.classList.remove('text-zinc-400');
+    btn.title = "Supressão de Ruído (Ligado)";
+    badge.classList.remove('bg-faketz-red');
+    badge.classList.add('bg-faketz-green');
+  } else {
+    btn.classList.remove('text-white');
+    btn.classList.add('text-zinc-400');
+    btn.title = "Supressão de Ruído (Desligado)";
+    badge.classList.add('bg-faketz-red');
+    badge.classList.remove('bg-faketz-green');
+  }
+}
+
 export async function toggleScreenShare() {
   if (!state.screenStream) {
     await startScreenSharing();
@@ -98,7 +136,12 @@ export async function startScreenSharing() {
       console.warn('Falha na captura padrão, tentando fallback básico de vídeo:', mediaErr);
       stream = await navigator.mediaDevices.getDisplayMedia({
         video: { frameRate: { ideal: 60, max: 60 } },
-        audio: true
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: false,
+          autoGainControl: false,
+          suppressLocalAudioPlayback: true
+        }
       });
     }
 
