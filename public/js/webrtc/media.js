@@ -13,7 +13,7 @@ export async function initMedia() {
       audio: {
         echoCancellation: true,      // Keep echo cancellation to prevent feedback loops
         noiseSuppression: false,     // Disable noise suppression to stop muffled/robotic voice
-        autoGainControl: false       // Disable auto gain so it doesn't arbitrarily lower mic volume
+        autoGainControl: true        // Enable auto gain so the mic volume is normalized
       } 
     });
 
@@ -80,32 +80,36 @@ export async function toggleNoiseSuppression() {
   try {
     const oldAudioTrack = state.localStream.getAudioTracks()[0];
     
+    // In Chrome, we MUST stop the track before requesting a new one, otherwise it ignores the new constraints
+    if (oldAudioTrack) {
+      oldAudioTrack.stop();
+    }
+    
     const newStream = await navigator.mediaDevices.getUserMedia({
       video: false,
       audio: {
         echoCancellation: true,
         noiseSuppression: state.noiseSuppression,
-        autoGainControl: state.noiseSuppression
+        autoGainControl: true // Always keep gain control on so they don't sound quiet
       }
     });
 
     const newAudioTrack = newStream.getAudioTracks()[0];
     newAudioTrack.enabled = !state.isMicMuted;
 
-    // Swap the track in all active peer connections without interrupting the call
+    // Swap the track in all active peer connections
     for (const userId in state.peers) {
       const { pc } = state.peers[userId];
-      // Find the audio sender that belongs to the microphone (matching the old track)
-      const sender = pc.getSenders().find(s => s.track && s.track.id === oldAudioTrack.id);
+      // Find the audio sender that belongs to the microphone (we check kind and assume it's the first or non-screen)
+      const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio' && !s.track.label.includes('screen') && !s.track.label.includes('system'));
       if (sender) {
         sender.replaceTrack(newAudioTrack).catch(e => console.error('Erro ao substituir track de áudio:', e));
       }
     }
 
-    // Swap the track in our local media stream
+    // Update local stream
     if (oldAudioTrack) {
       state.localStream.removeTrack(oldAudioTrack);
-      oldAudioTrack.stop();
     }
     state.localStream.addTrack(newAudioTrack);
   } catch (err) {
